@@ -1,4 +1,4 @@
-import { command, isPrivate } from "../../lib.js";
+import { command, isPrivate } from "../../lib/index.js";
 
 command(
   {

@@ -1,7 +1,7 @@
 import { command, isAdmin, parsedJid } from "../../lib/index.js";
 import { exec } from "child_process";
 import { PausedChats, WarnDB } from "../database/index.js";
-import { WARN_COUNT } from "../../config/index.js";
+import { WARN_COUNT } from "../../config.js";
 import { secondsToDHMS } from "../../lib/functions.js";
 const { saveWarn, resetWarn } = WarnDB;
 

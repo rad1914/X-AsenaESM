@@ -94,3 +94,13 @@ export async function getStatus(jid = null, type = null) {
     return false;
   }
 }
+
+export default {
+  GreetingsDB,
+  getMessage,
+  setMessage,
+  toggleStatus,
+  delMessage,
+  getStatus
+};
+

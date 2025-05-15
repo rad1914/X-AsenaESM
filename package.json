@@ -2,6 +2,7 @@
   "name": "x-asena",
   "version": "3.0.0",
   "description": "Whatsapp Bot",
+  "type": "module",
   "main": "index.js",
   "directories": {
     "lib": "lib"

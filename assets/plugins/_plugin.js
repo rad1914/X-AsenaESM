@@ -1,7 +1,7 @@
-import { command } from "../../lib.js";
+import { command } from "../../lib/index.js";
 import axios from "axios";
 import fs from "fs";
-import { Plugins } from "../database.js";
+import { Plugins } from "../database/index.js";
 const { PluginDB, installPlugin } = Plugins;
 
 command(

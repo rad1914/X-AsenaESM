@@ -1,5 +1,5 @@
 import { DELETED_LOG_CHAT, DELETED_LOG } from "../../config.js";
-import { command, isPrivate, serialize } from "../../lib.js";
+import { command, isPrivate, serialize } from "../../lib/index.js";
 import { loadMessage, getName } from "../database/StoreDb.js";
 
 command(

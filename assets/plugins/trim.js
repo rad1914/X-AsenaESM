@@ -1,4 +1,6 @@
-import { fromBuffer } from "file-type";
+import pkg from 'file-type';
+const { fromBuffer, mimeTypes } = pkg;
+
 import { command, isPrivate } from "../../lib/index.js";
 import { ffmpeg, parseTimeToSeconds } from "../../lib/functions.js";
 

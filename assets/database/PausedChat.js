@@ -24,4 +24,9 @@ export async function deleteAllPausedChats() {
   });
 }
 
-export { PausedChats };
+export default {
+  PausedChats,
+  getPausedChats,
+  savePausedChat,
+  deleteAllPausedChats
+};

@@ -1,4 +1,4 @@
-import { command, isPrivate, XKCDComic, getJson } from "../../lib.js";
+import { command, isPrivate, XKCDComic, getJson } from "../../lib/index.js";
 import axios from "axios";
 
 let triviaGames = {};

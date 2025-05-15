@@ -1,5 +1,5 @@
-import { command } from "../../lib.js";
-import { Greetings } from "../database.js";
+import { command } from "../../lib/index.js";
+import { Greetings } from "../database/index.js";
 const { setMessage, getMessage, delMessage, getStatus, toggleStatus } = Greetings;
 
 command(

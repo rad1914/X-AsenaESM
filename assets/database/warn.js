@@ -68,4 +68,9 @@ export async function resetWarn(userId) {
   });
 }
 
-export { WarnsDB };
+export default {
+  WarnsDB,
+  getWarns,
+  saveWarn,
+  resetWarn,
+};

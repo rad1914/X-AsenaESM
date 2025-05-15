@@ -19,7 +19,7 @@ const PluginDB = config.DATABASE.define("Plugin", {
   },
 });
 
-async function installPlugin(adres, file) {
+export async function installPlugin(adres, file) {
   const existingPlugin = await PluginDB.findOne({ where: { url: adres } });
 
   if (existingPlugin) {
@@ -29,7 +29,7 @@ async function installPlugin(adres, file) {
   }
 }
 
-async function removePlugin(name) {
+export async function removePlugin(name) {
   const existingPlugin = await PluginDB.findOne({ where: { name: name } });
 
   if (existingPlugin) {
@@ -40,7 +40,7 @@ async function removePlugin(name) {
   }
 }
 
-async function getandRequirePlugins() {
+export async function getandRequirePlugins() {
   let plugins = await PluginDB.findAll();
   plugins = plugins.map((plugin) => plugin.dataValues);
   for (const plugin of plugins) {
@@ -57,4 +57,9 @@ async function getandRequirePlugins() {
   }
 }
 
-export { PluginDB, installPlugin, getandRequirePlugins };
+export default {
+  PluginDB,
+  installPlugin,
+  removePlugin,
+  getandRequirePlugins,
+};

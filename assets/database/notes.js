@@ -23,4 +23,9 @@ export async function deleteAllNotes() {
   });
 }
 
-export { NotesDB };
+export default {
+NotesDB,
+getNotes,
+saveNote,
+deleteAllNotes
+};

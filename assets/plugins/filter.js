@@ -1,5 +1,5 @@
 import { getFilter, setFilter, deleteFilter } from "../database/filters.js";
-import { command } from "../../lib.js";
+import { command } from "../../lib/index.js";
 
 command(
   {

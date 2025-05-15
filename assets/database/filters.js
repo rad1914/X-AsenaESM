@@ -72,3 +72,10 @@ export async function deleteFilter(jid = null, filter) {
     return await existingFilter.destroy();
   }
 }
+
+export default {
+  FiltersDB,
+  getFilter,
+  setFilter,
+  deleteFilter
+};
