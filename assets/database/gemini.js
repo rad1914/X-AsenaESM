@@ -1,6 +1,6 @@
-const config = require("../../config");
-const util = require("util");
-const { DataTypes } = require("sequelize");
+import config from "../../config.js";
+import util from "util";
+import { DataTypes } from "sequelize";
 
 const GeminiDB = config.DATABASE.define("Geminis", {
   chatid: {
@@ -14,31 +14,29 @@ const GeminiDB = config.DATABASE.define("Geminis", {
 });
 
 const SaveGemini = async (chatid, parts) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const gemini = await GeminiDB.findOne({ where: { chatid } });
-      if (!gemini) {
-        await GeminiDB.create({ chatid, history: parts });
-      }
-      let part = gemini.history;
-      part.push(parts);
-      return await gemini.update({ chatid, history: part }).then(resolve);
-    } catch (e) {
-      console.log(util.format(e));
+  try {
+    const gemini = await GeminiDB.findOne({ where: { chatid } });
+    if (!gemini) {
+      await GeminiDB.create({ chatid, history: parts });
+      return;
     }
-  });
+    let part = gemini.history;
+    part.push(parts);
+    await gemini.update({ chatid, history: part });
+  } catch (e) {
+    console.log(util.format(e));
+  }
 };
 
 const GetGemini = async (chatid) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const gemini = await GeminiDB.findOne({ where: { chatid } });
-      if (!gemini) return resolve([]);
-    } catch (e) {
-      console.log(util.format(e));
-      return resolve([]);
-    }
-  });
+  try {
+    const gemini = await GeminiDB.findOne({ where: { chatid } });
+    if (!gemini) return [];
+    return gemini;
+  } catch (e) {
+    console.log(util.format(e));
+    return [];
+  }
 };
 
-module.exports = { SaveGemini, GetGemini };
+export { SaveGemini, GetGemini };

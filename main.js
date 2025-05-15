@@ -1,3 +1,3 @@
-const {command} = require("./lib")
+import { command } from "./lib.js";
 
-module.exports = {Module:command}
+export const Module = command;

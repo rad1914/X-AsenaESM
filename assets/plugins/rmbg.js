@@ -1,6 +1,7 @@
-const { command, isPrivate } = require("../../lib/");
-const { removeBg } = require("../../lib/functions");
-const config = require("../../config");
+import { command, isPrivate } from "../../lib/index.js";
+import { removeBg } from "../../lib/functions.js";
+import config from "../../config.js";
+
 command(
   {
     pattern: "rmbg",
@@ -15,8 +16,8 @@ command(
         "Set RemoveBg API Key in config.js \n Get it from https://www.remove.bg/api"
       );
     if (!message.reply_message && !message.reply_message.image)
-        
       return await message.reply("Reply to an image");
+
     let buff = await m.quoted.download();
     let buffer = await removeBg(buff);
     if (!buffer) return await message.reply("An error occured");

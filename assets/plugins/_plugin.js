@@ -1,7 +1,8 @@
-const { command } = require("../../lib");
-const axios = require("axios");
-const fs = require("fs");
-const { PluginDB, installPlugin } = require("../database").Plugins;
+import { command } from "../../lib.js";
+import axios from "axios";
+import fs from "fs";
+import { Plugins } from "../database.js";
+const { PluginDB, installPlugin } = Plugins;
 
 command(
   {
@@ -37,11 +38,12 @@ command(
         if (!plugin_name) {
           plugin_name = "__" + Math.random().toString(36).substring(8);
         }
-        fs.writeFileSync(__dirname + "/" + plugin_name + ".js", data);
+        fs.writeFileSync(new URL(`./${plugin_name}.js`, import.meta.url), data);
         try {
-          require("./" + plugin_name);
+          // Dynamic import instead of require:
+          await import(`./${plugin_name}.js`);
         } catch (e) {
-          fs.unlinkSync(__dirname + "/" + plugin_name + ".js");
+          fs.unlinkSync(new URL(`./${plugin_name}.js`, import.meta.url));
           return await message.sendMessage(
             message.jid,
             "Invalid Plugin\n ```" + e + "```"
@@ -103,8 +105,13 @@ command(
       return await message.sendMessage(message.jid, "_Plugin not found_");
     } else {
       await plugin[0].destroy();
-      delete require.cache[require.resolve("./" + match + ".js")];
-      fs.unlinkSync(__dirname + "/" + match + ".js");
+
+      // Clear module from ES module loader cache workaround is tricky; 
+      // Node.js ESM does not expose direct cache clearing.
+      // A common approach is to spawn a child process or restart the app.
+      // Here, just unlink the file:
+      fs.unlinkSync(new URL(`./${match}.js`, import.meta.url));
+
       await message.sendMessage(message.jid, `Plugin ${match} deleted`);
     }
   }

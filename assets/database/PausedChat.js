@@ -1,5 +1,5 @@
-const config = require('../../config');
-const { DataTypes } = require('sequelize');
+import config from '../../config.js';
+import { DataTypes } from 'sequelize';
 
 const PausedChats = config.DATABASE.define('pausedChats', {
   chatId: {
@@ -9,24 +9,19 @@ const PausedChats = config.DATABASE.define('pausedChats', {
   }
 });
 
-async function getPausedChats() {
+export async function getPausedChats() {
   return await PausedChats.findAll();
 }
 
-async function savePausedChat(chatId) {
+export async function savePausedChat(chatId) {
   return await PausedChats.create({ chatId });
 }
 
-async function deleteAllPausedChats() {
+export async function deleteAllPausedChats() {
   return await PausedChats.destroy({
     where: {},
     truncate: true
   });
 }
 
-module.exports = {
-  PausedChats,
-  getPausedChats,
-  savePausedChat,
-  deleteAllPausedChats
-};
+export { PausedChats };

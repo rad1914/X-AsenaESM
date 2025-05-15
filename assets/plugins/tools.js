@@ -1,15 +1,16 @@
-const {
+import {
   command,
   qrcode,
   Bitly,
   isPrivate,
   isUrl,
   readQr,
-} = require("../../lib/");
+} from "../../lib/index.js";
 
-const { downloadMediaMessage } = require("baileys");
-const { getLyrics } = require("../../lib/functions");
-const config = require("../../config");
+import { downloadMediaMessage } from "baileys";
+import { getLyrics } from "../../lib/functions.js";
+import config from "../../config.js";
+
 command(
   {
     pattern: "vv",

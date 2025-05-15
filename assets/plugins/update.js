@@ -1,10 +1,11 @@
-const config = require("../../config");
-const { PROCESSNAME } = require("../../config");
-const { command } = require("../../lib/");
-const { exec } = require("child_process");
-const simplegit = require("simple-git");
+import config from "../../config.js";
+import { PROCESSNAME } from "../../config.js";
+import { command } from "../../lib/index.js";
+import { exec } from "child_process";
+import simplegit from "simple-git";
+
 const git = simplegit();
-var branch = config.BRANCH;
+const branch = config.BRANCH;
 
 command(
   {
@@ -14,10 +15,10 @@ command(
     type: "user",
   },
   async (message, match) => {
-    prefix = message.prefix;
+    const prefix = message.prefix;
     await git.fetch();
 
-    var commits = await git.log([branch + "..origin/" + branch]);
+    const commits = await git.log([branch + "..origin/" + branch]);
     if (match === "now") {
       if (commits.total === 0) {
         return await message.sendMessage(

@@ -1,5 +1,5 @@
-const { command, isPrivate, serialize } = require("../../lib/");
-const { loadMessage } = require("../database/StoreDb");
+import { command, isPrivate, serialize } from "../../lib/index.js";
+import { loadMessage } from "../database/StoreDb.js";
 
 command(
   {

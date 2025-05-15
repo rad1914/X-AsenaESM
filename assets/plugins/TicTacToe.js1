@@ -1,11 +1,12 @@
-const { command, isAdmin, parseJid, isPrivate } = require("../../lib/");
+import { command, isAdmin, parseJid, isPrivate } from "../../lib/index.js";
+
 command(
   {
     pattern: "delttt",
     fromMe: isPrivate,
     desc: "delete TicTacToe running game.",
     type: "game",
-    dontAddCommandList:true
+    dontAddCommandList: true,
   },
   async (message, match, m) => {
     let isadmin = await isAdmin(message.jid, message.user, message.client);
@@ -35,7 +36,7 @@ command(
   },
   async (message, match, m) => {
     {
-      let TicTacToe = require("../../lib/tictactoe");
+      const TicTacToe = (await import("../../lib/tictactoe.js")).default;
       this.game = this.game ? this.game : {};
       if (
         Object.values(this.game).find(

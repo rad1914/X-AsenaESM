@@ -1,5 +1,5 @@
-const { command, isPrivate, XKCDComic, getJson } = require("../../lib");
-const axios = require("axios");
+import { command, isPrivate, XKCDComic, getJson } from "../../lib.js";
+import axios from "axios";
 
 let triviaGames = {};
 

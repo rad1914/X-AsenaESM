@@ -1,5 +1,6 @@
-const { command, isPrivate } = require("../../lib/");
-const { aiImage } = require("../../lib/functions");
+import { command, isPrivate } from "../../lib/index.js";
+import { aiImage } from "../../lib/functions.js";
+
 command(
   {
     pattern: "genimage",

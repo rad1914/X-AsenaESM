@@ -1,5 +1,5 @@
-const config = require("../../config");
-const { DataTypes } = require("sequelize");
+import config from "../../config.js";
+import { DataTypes } from "sequelize";
 
 const options = config.DATABASE.define("Options", {
   chat: {
@@ -17,23 +17,23 @@ const options = config.DATABASE.define("Options", {
 });
 
 async function toggle(jid = null, type = null) {
-    const existingMessage = await options.findOne({
-      where: {
-        chat: jid,
-        type,
-      },
-    });
-  
-    if (!existingMessage) {
-        return await options.create({
-            chat: jid,
-            type,
-            status: true,
-          });
-    } else {
-      const newStatus = !existingMessage.dataValues.status;
-      return await existingMessage.update({ chat: jid, status: newStatus });
-    }
-  }
+  const existingMessage = await options.findOne({
+    where: {
+      chat: jid,
+      type,
+    },
+  });
 
-  module.exports = toggle
+  if (!existingMessage) {
+    return await options.create({
+      chat: jid,
+      type,
+      status: true,
+    });
+  } else {
+    const newStatus = !existingMessage.dataValues.status;
+    return await existingMessage.update({ chat: jid, status: newStatus });
+  }
+}
+
+export default toggle;

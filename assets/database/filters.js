@@ -1,7 +1,7 @@
-const config = require("../../config");
-const { DataTypes } = require("sequelize");
+import config from "../../config.js";
+import { DataTypes } from "sequelize";
 
-const FiltersDB = config.DATABASE.define("filters", {
+export const FiltersDB = config.DATABASE.define("filters", {
   chat: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -21,7 +21,7 @@ const FiltersDB = config.DATABASE.define("filters", {
   },
 });
 
-async function getFilter(jid = null, filter = null) {
+export async function getFilter(jid = null, filter = null) {
   const whereClause = { chat: jid };
   if (filter !== null) {
     whereClause.pattern = filter;
@@ -33,7 +33,7 @@ async function getFilter(jid = null, filter = null) {
   return filters.length > 0 ? filters : false;
 }
 
-async function setFilter(jid = null, filter = null, tex = null, regx = false) {
+export async function setFilter(jid = null, filter = null, tex = null, regx = false) {
   const existingFilter = await FiltersDB.findOne({
     where: {
       chat: jid,
@@ -58,7 +58,7 @@ async function setFilter(jid = null, filter = null, tex = null, regx = false) {
   }
 }
 
-async function deleteFilter(jid = null, filter) {
+export async function deleteFilter(jid = null, filter) {
   const existingFilter = await FiltersDB.findOne({
     where: {
       chat: jid,
@@ -72,10 +72,3 @@ async function deleteFilter(jid = null, filter) {
     return await existingFilter.destroy();
   }
 }
-
-module.exports = {
-  FiltersDB,
-  getFilter,
-  setFilter,
-  deleteFilter,
-};

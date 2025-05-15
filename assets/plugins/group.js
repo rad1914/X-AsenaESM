@@ -1,7 +1,7 @@
-const fs = require("fs");
-const { command, isPrivate } = require("../../lib/");
-const { isAdmin, parsedJid } = require("../../lib");
-const { delay } = require("baileys");
+import fs from "fs";
+import { command, isPrivate } from "../../lib/index.js";
+import { isAdmin, parsedJid } from "../../lib/index.js";
+import { delay } from "baileys";
 
 command(
   {
@@ -56,6 +56,7 @@ command(
     });
   }
 );
+
 command(
   {
     pattern: "promote",
@@ -82,6 +83,7 @@ command(
     });
   }
 );
+
 command(
   {
     pattern: "demote",
@@ -191,7 +193,7 @@ command(
     type: "group",
   },
   async (message, match) => {
-    console.log("match")
+    console.log("match");
     match = match || message.reply_message.text;
     if (!match) return message.reply("_Enter or reply to a text to tag_");
     if (!message.isGroup) return;
@@ -210,7 +212,7 @@ command(
     type: "group",
   },
   async (message, match) => {
-    console.log("match")
+    console.log("match");
     match = match || message.reply_message.text;
     if (!match) return message.reply("_Enter or reply to a text to tag_");
     if (!message.isGroup) return;
@@ -221,9 +223,9 @@ command(
   }
 );
 
-
 const participants = fs.readFileSync("removed.txt", "utf-8").split("\n");
 //const participants = ["9656459062"]
+
 command(
   {
     pattern: "inactive",

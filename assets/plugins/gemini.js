@@ -1,6 +1,6 @@
-const fs = require("fs");
-const { command } = require("../../lib");
-const gemini = require("../../lib/Gemini");
+import fs from "fs";
+import { command } from "../../lib/index.js";
+import gemini from "../../lib/Gemini.js";
 
 command(
   {

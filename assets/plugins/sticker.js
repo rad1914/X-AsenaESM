@@ -1,6 +1,7 @@
-const config = require("../../config");
-const { command, isPrivate, toAudio } = require("../../lib/");
-const { webp2mp4, textToImg } = require("../../lib/functions");
+import config from "../../config.js";
+import { command, isPrivate, toAudio } from "../../lib/index.js";
+import { webp2mp4, textToImg } from "../../lib/functions.js";
+
 command(
   {
     pattern: "sticker",
@@ -9,7 +10,12 @@ command(
     type: "converter",
   },
   async (message, match, m) => {
-    if (!message.reply_message&& (!message.reply_message.video || !message.reply_message.sticker || !message.reply_message.text))
+    if (
+      !message.reply_message &&
+      (!message.reply_message.video ||
+        !message.reply_message.sticker ||
+        !message.reply_message.text)
+    )
       return await message.reply("_Reply to photo/video/text_");
     var buff;
     if (message.reply_message.text) {

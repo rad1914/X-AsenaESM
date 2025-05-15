@@ -1,7 +1,7 @@
-const config = require("../../config");
-const { DataTypes } = require("sequelize");
+import config from "../../config.js";
+import { DataTypes } from "sequelize";
 
-const GreetingsDB = config.DATABASE.define("Greetings", {
+export const GreetingsDB = config.DATABASE.define("Greetings", {
   chat: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -20,7 +20,7 @@ const GreetingsDB = config.DATABASE.define("Greetings", {
   },
 });
 
-async function getMessage(jid = null, type = null) {
+export async function getMessage(jid = null, type = null) {
   const message = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -31,7 +31,7 @@ async function getMessage(jid = null, type = null) {
   return message ? message.dataValues : false;
 }
 
-async function setMessage(jid = null, type = null, text = null) {
+export async function setMessage(jid = null, type = null, text = null) {
   const existingMessage = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -51,7 +51,7 @@ async function setMessage(jid = null, type = null, text = null) {
   }
 }
 
-async function toggleStatus(jid = null, type = null) {
+export async function toggleStatus(jid = null, type = null) {
   const existingMessage = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -67,7 +67,7 @@ async function toggleStatus(jid = null, type = null) {
   }
 }
 
-async function delMessage(jid = null, type = null) {
+export async function delMessage(jid = null, type = null) {
   const existingMessage = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -80,7 +80,7 @@ async function delMessage(jid = null, type = null) {
   }
 }
 
-async function getStatus(jid = null, type = null) {
+export async function getStatus(jid = null, type = null) {
   try {
     const existingMessage = await GreetingsDB.findOne({
       where: {
@@ -94,12 +94,3 @@ async function getStatus(jid = null, type = null) {
     return false;
   }
 }
-
-module.exports = {
-  GreetingsDB,
-  setMessage,
-  getMessage,
-  delMessage,
-  toggleStatus,
-  getStatus,
-};

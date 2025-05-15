@@ -1,6 +1,6 @@
-const { command } = require("../../lib");
-const { setMessage, getMessage, delMessage, getStatus, toggleStatus } =
-  require("../database").Greetings;
+import { command } from "../../lib.js";
+import { Greetings } from "../database.js";
+const { setMessage, getMessage, delMessage, getStatus, toggleStatus } = Greetings;
 
 command(
   {

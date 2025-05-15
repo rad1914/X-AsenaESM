@@ -1,5 +1,5 @@
-const { command, isPrivate } = require("../../lib/");
-const { listall } = require("../../lib/fancy");
+import { command, isPrivate } from "../../lib/index.js";
+import { listall } from "../../lib/fancy.js";
 
 command(
   {
@@ -15,7 +15,7 @@ command(
     if (replyMessageText) {
       if (!isNaN(match))
         return await message.reply(styleText(replyMessageText, match));
-      
+
       let fancyTexts = listAllFancyTexts(replyMessageText);
       return await message.reply(fancyTexts);
     }

@@ -1,11 +1,12 @@
-const {
+import {
   command,
   getUrl,
   igdl,
   isIgUrl,
   isPrivate,
   getJson,
-} = require("../../lib/");
+} from "../../lib/index.js";
+
 command(
   {
     pattern: "insta",

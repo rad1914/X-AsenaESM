@@ -1,6 +1,6 @@
-const { isJidGroup } = require("baileys");
-const config = require("../../config");
-const { DataTypes } = require("sequelize");
+import { isJidGroup } from "baileys";
+import config from "../../config.js";
+import { DataTypes } from "sequelize";
 
 const chatDb = config.DATABASE.define("Chat", {
   id: {
@@ -45,7 +45,7 @@ const contactDb = config.DATABASE.define("contact", {
   },
 });
 
-const saveContact = async (jid, name) => {
+export const saveContact = async (jid, name) => {
   try {
     if (!jid || !name) return;
     if (isJidGroup(jid)) return;
@@ -63,7 +63,7 @@ const saveContact = async (jid, name) => {
   }
 };
 
-const saveMessage = async (message, user) => {
+export const saveMessage = async (message, user) => {
   try {
     const jid = message.key.remoteJid;
     const id = message.key.id;
@@ -81,7 +81,7 @@ const saveMessage = async (message, user) => {
   }
 };
 
-const loadMessage = async (id) => {
+export const loadMessage = async (id) => {
   if (!id) return;
   const message = await messageDb.findOne({
     where: { id },
@@ -90,7 +90,7 @@ const loadMessage = async (id) => {
   return false;
 };
 
-const saveChat = async (chat) => {
+export const saveChat = async (chat) => {
   if (chat.id === "status@broadcast") return;
   if (chat.id === "broadcast") return;
   let isGroup = isJidGroup(chat.id);
@@ -110,14 +110,8 @@ const saveChat = async (chat) => {
   }
 };
 
-const getName = async (jid) => {
+export const getName = async (jid) => {
   const contact = await contactDb.findOne({ where: { jid } });
   if (!contact) return jid.split("@")[0].replace(/_/g, " ");
   return contact.name;
-};
-module.exports = {
-  saveMessage,
-  loadMessage,
-  saveChat,
-  getName,
 };

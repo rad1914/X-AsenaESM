@@ -1,8 +1,8 @@
-const { command, isAdmin, parsedJid } = require("../../lib");
-const { exec } = require("child_process");
-const { PausedChats, WarnDB } = require("../database");
-const { WARN_COUNT } = require("../../config");
-const { secondsToDHMS } = require("../../lib/functions");
+import { command, isAdmin, parsedJid } from "../../lib/index.js";
+import { exec } from "child_process";
+import { PausedChats, WarnDB } from "../database/index.js";
+import { WARN_COUNT } from "../../config/index.js";
+import { secondsToDHMS } from "../../lib/functions.js";
 const { saveWarn, resetWarn } = WarnDB;
 
 command(
@@ -133,7 +133,7 @@ command(
     if (message.isGroup) {
       let jid = message.mention[0] || message.reply_message.jid;
       if (!jid) return await message.reply("_Reply to a person or mention_");
-      await message.block(jid);
+      await message.unblock(jid);
       return await message.sendMessage(
         message.jid,
         `_@${jid.split("@")[0]} unblocked_`,

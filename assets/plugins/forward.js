@@ -1,4 +1,4 @@
-const { command, parsedJid,isPrivate } = require("../../lib/");
+import { command, parsedJid, isPrivate } from "../../lib/index.js";
 
 command(
   {
@@ -8,10 +8,10 @@ command(
     type: "Util",
   },
   async (message, match, m) => {
-    if(!m.quoted) return message.reply('Reply to something') 
+    if (!m.quoted) return message.reply('Reply to something');
     let jids = parsedJid(match);
     for (let i of jids) {
       await message.forward(i, message.reply_message.message);
-    }   
+    }
   }
 );

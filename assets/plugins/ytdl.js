@@ -1,4 +1,4 @@
-const {
+import {
   command,
   isPrivate,
   isUrl,
@@ -7,8 +7,8 @@ const {
   toAudio,
   getJson,
   validateQuality,
-} = require("../../lib");
-const { yta, ytv, ytsdl } = require("../../lib/ytdl");
+} from "../../lib.js";
+import { yta, ytv, ytsdl } from "../../lib/ytdl.js";
 
 command(
   {

@@ -1,5 +1,5 @@
-const config = require('../../config');
-const { DataTypes } = require('sequelize');
+import config from '../../config.js';
+import { DataTypes } from 'sequelize';
 
 const NotesDB = config.DATABASE.define('notes', {
   note: {
@@ -8,24 +8,19 @@ const NotesDB = config.DATABASE.define('notes', {
   }
 });
 
-async function getNotes() {
+export async function getNotes() {
   return await NotesDB.findAll();
 }
 
-async function saveNote(note) {
+export async function saveNote(note) {
   return await NotesDB.create({ note });
 }
 
-async function deleteAllNotes() {
+export async function deleteAllNotes() {
   return await NotesDB.destroy({
     where: {},
     truncate: true
   });
 }
 
-module.exports = {
-  NotesDB,
-  getNotes,
-  saveNote,
-  deleteAllNotes
-};
+export { NotesDB };

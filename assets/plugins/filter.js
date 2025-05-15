@@ -1,5 +1,5 @@
-const { getFilter, setFilter, deleteFilter } = require("../database/filters");
-const { command} = require("../../lib");
+import { getFilter, setFilter, deleteFilter } from "../database/filters.js";
+import { command } from "../../lib.js";
 
 command(
   {
@@ -15,11 +15,11 @@ command(
       [text, msg] = match.split(":");
     } catch {}
     if (!match) {
-      filtreler = await getFilter(message.jid);
+      const filtreler = await getFilter(message.jid);
       if (filtreler === false) {
         await message.reply("No filters are currently set in this chat.");
       } else {
-        var mesaj = "Your active filters for this chat:" + "\n\n";
+        let mesaj = "Your active filters for this chat:" + "\n\n";
         filtreler.map(
           (filter) => (mesaj += `✒ ${filter.dataValues.pattern}\n`)
         );
@@ -48,7 +48,7 @@ command(
   async (message, match) => {
     if (!match) return await message.reply("\n*Example:* ```.stop hello```");
 
-    del = await deleteFilter(message.jid, match);
+    const del = await deleteFilter(message.jid, match);
     await message.reply(`_Filter ${match} deleted_`);
 
     if (!del) {
@@ -60,17 +60,17 @@ command(
 command(
   { on: "text", fromMe: false, dontAddCommandList: true },
   async (message, match) => {
-    var filtreler = await getFilter(message.jid);
+    const filtreler = await getFilter(message.jid);
     if (!filtreler) return;
     filtreler.map(async (filter) => {
-      pattern = new RegExp(
+      const pattern = new RegExp(
         filter.dataValues.regex
           ? filter.dataValues.pattern
           : "\\b(" + filter.dataValues.pattern + ")\\b",
         "gm"
       );
       if (pattern.test(match)) {
-      return  await message.reply(filter.dataValues.text, {
+        return await message.reply(filter.dataValues.text, {
           quoted: message,
         });
       }

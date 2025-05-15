@@ -1,6 +1,6 @@
-const config = require("../../config");
-const util = require("util");
-const { DataTypes } = require("sequelize");
+import config from "../../config.js";
+import util from "util";
+import { DataTypes } from "sequelize";
 
 const banBotDb = config.DATABASE.define("banbot", {
   chatid: {
@@ -15,46 +15,43 @@ const banBotDb = config.DATABASE.define("banbot", {
 });
 
 const isBanned = async (chatid) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const ban = await banBotDb.findOne({ where: { chatid } });
-      return resolve(ban ? ban.ban : false);
-    } catch (e) {
-      console.log(util.format(e));
-    }
-  });
+  try {
+    const ban = await banBotDb.findOne({ where: { chatid } });
+    return ban ? ban.ban : false;
+  } catch (e) {
+    console.log(util.format(e));
+    return false;
+  }
 };
 
 const banUser = async (chatid) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const ban = await banBotDb.findOne({ where: { chatid } });
-      if (ban) {
-        await ban.update({ ban: true });
-      } else {
-        await banBotDb.create({ chatid, ban: true });
-      }
-      return resolve(true);
-    } catch (e) {
-      console.log(util.format(e));
+  try {
+    const ban = await banBotDb.findOne({ where: { chatid } });
+    if (ban) {
+      await ban.update({ ban: true });
+    } else {
+      await banBotDb.create({ chatid, ban: true });
     }
-  });
+    return true;
+  } catch (e) {
+    console.log(util.format(e));
+    return false;
+  }
 };
 
 const unbanUser = async (chatid) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const ban = await banBotDb.findOne({ where: { chatid } });
-      if (ban) {
-        await ban.update({ ban: false });
-      } else {
-        await banBotDb.create({ chatid, ban: false });
-      }
-      return resolve(true);
-    } catch (e) {
-      console.log(util.format(e));
+  try {
+    const ban = await banBotDb.findOne({ where: { chatid } });
+    if (ban) {
+      await ban.update({ ban: false });
+    } else {
+      await banBotDb.create({ chatid, ban: false });
     }
-  });
+    return true;
+  } catch (e) {
+    console.log(util.format(e));
+    return false;
+  }
 };
 
-module.exports = { isBanned, banUser, unbanUser };
+export { isBanned, banUser, unbanUser };

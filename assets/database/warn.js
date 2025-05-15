@@ -1,5 +1,5 @@
-const config = require('../../config');
-const { DataTypes } = require('sequelize');
+import config from '../../config.js';
+import { DataTypes } from 'sequelize';
 
 const WarnsDB = config.DATABASE.define('warns', {
   userId: {
@@ -32,46 +32,40 @@ const WarnsDB = config.DATABASE.define('warns', {
   },
 });
 
-async function getWarns(userId) {
+export async function getWarns(userId) {
   return await WarnsDB.findOne({ where: { userId } });
 }
 
-async function saveWarn(userId, reason) {
-    let existingWarn = await getWarns(userId);
-  
-    if (existingWarn) {
-      existingWarn.warnCount += 1;
-  
-      if (reason) {
-        existingWarn.reasons = existingWarn.reasons || [];
-        existingWarn.reasons.push(reason);
-      }
-  
-      await existingWarn.save();
-    } else {
-      existingWarn = await WarnsDB.create({
-        userId,
-        reasons: reason ? [reason] : null,
-        warnCount: 0, 
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-  
-    return existingWarn;
-  }
-  
+export async function saveWarn(userId, reason) {
+  let existingWarn = await getWarns(userId);
 
-async function resetWarn(userId) {
+  if (existingWarn) {
+    existingWarn.warnCount += 1;
+
+    if (reason) {
+      existingWarn.reasons = existingWarn.reasons || [];
+      existingWarn.reasons.push(reason);
+    }
+
+    await existingWarn.save();
+  } else {
+    existingWarn = await WarnsDB.create({
+      userId,
+      reasons: reason ? [reason] : null,
+      warnCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  return existingWarn;
+}
+
+export async function resetWarn(userId) {
   return await WarnsDB.destroy({
-    where: {userId},
+    where: { userId },
     truncate: true,
   });
 }
 
-module.exports = {
-  WarnsDB,
-  getWarns,
-  saveWarn,
-  resetWarn,
-};
+export { WarnsDB };

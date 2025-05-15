@@ -1,6 +1,7 @@
-const { command, isPrivate } = require("../../lib/");
-const { parsedJid } = require("../../lib/functions");
-const { banUser, unbanUser, isBanned } = require("../database/ban");
+import { command, isPrivate } from "../../lib/index.js";
+import { parsedJid } from "../../lib/functions.js";
+import { banUser, unbanUser, isBanned } from "../database/ban.js";
+
 command(
   {
     on: "message",

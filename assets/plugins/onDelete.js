@@ -1,6 +1,7 @@
-const { DELETED_LOG_CHAT, DELETED_LOG } = require("../../config");
-const { command, isPrivate, serialize } = require("../../lib");
-const { loadMessage, getName } = require("../database/StoreDb");
+import { DELETED_LOG_CHAT, DELETED_LOG } from "../../config.js";
+import { command, isPrivate, serialize } from "../../lib.js";
+import { loadMessage, getName } from "../database/StoreDb.js";
+
 command(
   {
     on: "delete",

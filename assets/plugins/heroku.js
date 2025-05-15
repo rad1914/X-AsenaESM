@@ -1,11 +1,13 @@
-const got = require("got");
-const Heroku = require("heroku-client");
-const { command, isPrivate } = require("../../lib/");
-const Config = require("../../config");
+import got from "got";
+import Heroku from "heroku-client";
+import { command, isPrivate } from "../../lib/index.js";
+import Config from "../../config.js";
+import { secondsToDHMS } from "../../lib/functions.js";
+import { delay } from "baileys";
+import { exec } from "child_process";
+
 const heroku = new Heroku({ token: Config.HEROKU_API_KEY });
 const baseURI = "/apps/" + Config.HEROKU_APP_NAME;
-const { secondsToDHMS } = require("../../lib/functions");
-const { delay } = require("baileys");
 
 command(
   {
@@ -28,8 +30,8 @@ command(
         await message.reply(`HEROKU : ${error.body.message}`);
       });
     } else {
-      require("child_process").exec(
-        "pm2 restart "+Config.PROCESSNAME,
+      exec(
+        "pm2 restart " + Config.PROCESSNAME,
         (error, stdout, stderr) => {
           if (error) {
             return message.sendMessage(message.jid, `Error: ${error}`);
@@ -40,6 +42,7 @@ command(
     }
   }
 );
+
 command(
   {
     pattern: "shutdown",
@@ -97,7 +100,7 @@ command(
         .get("/account")
         .then(async (account) => {
           const url = `https://api.heroku.com/accounts/${account.id}/actions/get-quota`;
-          headers = {
+          const headers = {
             "User-Agent": "Chrome/80.0.3987.149 Mobile Safari/537.36",
             Authorization: "Bearer " + Config.HEROKU_API_KEY,
             Accept: "application/vnd.heroku+json; version=3.account-quotas",

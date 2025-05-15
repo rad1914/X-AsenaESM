@@ -1,6 +1,12 @@
-const { default: got } = require("got");
-const config = require("../../config");
-const { DataTypes } = require("sequelize");
+import got from "got";
+import config from "../../config.js";
+import { DataTypes } from "sequelize";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PluginDB = config.DATABASE.define("Plugin", {
   name: {
@@ -37,20 +43,18 @@ async function removePlugin(name) {
 async function getandRequirePlugins() {
   let plugins = await PluginDB.findAll();
   plugins = plugins.map((plugin) => plugin.dataValues);
-  plugins.forEach((plugin) => {
+  for (const plugin of plugins) {
     try {
-      got(plugin.url).then(async (res) => {
-        require("fs").writeFileSync(
-          __basedir + "/assets/plugins/" + plugin.name + ".js",
-          res.body
-        );
-        require(__basedir + "/assets/plugins/" + plugin.name);
-        console.log("Installed plugin:", plugin.name);
-      });
+      const res = await got(plugin.url);
+      const pluginPath = path.resolve(__dirname, "../../assets/plugins/", `${plugin.name}.js`);
+      fs.writeFileSync(pluginPath, res.body);
+      // Dynamically import the plugin after saving
+      await import(`file://${pluginPath}`);
+      console.log("Installed plugin:", plugin.name);
     } catch (e) {
       console.error(e);
     }
-  });
+  }
 }
 
-module.exports = { PluginDB, installPlugin, getandRequirePlugins };
+export { PluginDB, installPlugin, getandRequirePlugins };

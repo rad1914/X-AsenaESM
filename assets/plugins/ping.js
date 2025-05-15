@@ -1,5 +1,6 @@
-const { fromBuffer, mimeTypes } = require("file-type");
-const { command, isPrivate } = require("../../lib/");
+import { fromBuffer, mimeTypes } from "file-type";
+import { command, isPrivate } from "../../lib/index.js";
+
 command(
   {
     pattern: "ping",

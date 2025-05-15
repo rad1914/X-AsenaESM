@@ -1,4 +1,4 @@
-const { command, isPrivate } = require("../../lib");
+import { command, isPrivate } from "../../lib.js";
 
 command(
   {
