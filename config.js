@@ -1,17 +1,22 @@
 import { Sequelize } from "sequelize";
-import fs from "fs";
+import fs from "fs"; // Standard fs, kept as it was in original require list
 import dotenv from "dotenv";
+
 dotenv.config();
 
 const toBool = (x) => x === "true";
-const DATABASE_URL = process.env.DATABASE_URL || "./assets/database.db";
+
+// Export individual constants
+// This DATABASE_URL is the primary source, export it and use it below
+export const DATABASE_URL = process.env.DATABASE_URL || "./assets/database.db";
 
 export const ANTILINK = toBool(process.env.ANTI_LINK) || false;
 export const LOGS = toBool(process.env.LOGS) || true;
+// In your original config, ANTILINK_ACTION was derived from process.env.ANTI_LINK
 export const ANTILINK_ACTION = process.env.ANTI_LINK || "kick";
 export const SESSION_ID = process.env.SESSION_ID || null;
 export const LANG = process.env.LANG || "EN";
-export const AUTH_TOKEN = "";
+export const AUTH_TOKEN = ""; // As per original
 export const HANDLERS =
   process.env.HANDLER === "false" || process.env.HANDLER === "null"
     ? "^"
@@ -20,14 +25,11 @@ export const RMBG_KEY = process.env.RMBG_KEY || false;
 export const BRANCH = "main";
 export const WARN_COUNT = 3;
 export const PACKNAME = process.env.PACKNAME || "X-Asena";
-export const WELCOME_MSG =
-  process.env.WELCOME_MSG || "Hi @user Welcome to @gname";
-export const GOODBYE_MSG =
-  process.env.GOODBYE_MSG || "Hi @user It was Nice Seeing you";
+export const WELCOME_MSG = process.env.WELCOME_MSG || "Hi @user Welcome to @gname";
+export const GOODBYE_MSG = process.env.GOODBYE_MSG || "Hi @user It was Nice Seeing you";
 export const AUTHOR = process.env.AUTHOR || "X-Electra";
 export const SUDO =
-  process.env.SUDO ||
-  "918113921898,919598157259,918590508376,919383400679";
+  process.env.SUDO || "918113921898,919598157259,918590508376,919383400679";
 export const HEROKU_APP_NAME = process.env.HEROKU_APP_NAME || "";
 export const HEROKU_API_KEY = process.env.HEROKU_API_KEY || "";
 export const OWNER_NAME = process.env.OWNER_NAME || "Neeraj-X0";
@@ -41,17 +43,17 @@ export const SESSION_URL = process.env.SESSION_URL || "";
 export const DELETED_LOG = toBool(process.env.DELETED_LOG) || false;
 export const DELETED_LOG_CHAT = process.env.DELETED_LOG_CHAT || false;
 export const REMOVEBG = process.env.REMOVEBG || false;
-export const DATABASE_URL_CONST = DATABASE_URL;
 export const STATUS_SAVER = toBool(process.env.STATUS_SAVER) || true;
 
+// DATABASE instance, uses the exported DATABASE_URL
 export const DATABASE =
   DATABASE_URL === "./assets/database.db"
     ? new Sequelize({
         dialect: "sqlite",
-        storage: DATABASE_URL,
+        storage: DATABASE_URL, // Use the exported const
         logging: false,
       })
-    : new Sequelize(DATABASE_URL, {
+    : new Sequelize(DATABASE_URL, { // Use the exported const
         dialect: "postgres",
         ssl: true,
         protocol: "postgres",
@@ -62,7 +64,8 @@ export const DATABASE =
         logging: false,
       });
 
-export default {
+// Create an object containing all the exported constants for the default export
+const config = {
   ANTILINK,
   LOGS,
   ANTILINK_ACTION,
@@ -91,7 +94,9 @@ export default {
   DELETED_LOG,
   DELETED_LOG_CHAT,
   REMOVEBG,
-  DATABASE_URL_CONST,
+  DATABASE_URL, // This refers to the `export const DATABASE_URL` defined above
   STATUS_SAVER,
-  DATABASE
+  DATABASE,
 };
+
+export default config;

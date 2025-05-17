@@ -1,7 +1,7 @@
 import config from "../../config.js";
 import { DataTypes } from "sequelize";
 
-export const GreetingsDB = config.DATABASE.define("Greetings", {
+const GreetingsDB = config.DATABASE.define("Greetings", {
   chat: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -20,7 +20,7 @@ export const GreetingsDB = config.DATABASE.define("Greetings", {
   },
 });
 
-export async function getMessage(jid = null, type = null) {
+async function getMessage(jid = null, type = null) {
   const message = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -31,7 +31,7 @@ export async function getMessage(jid = null, type = null) {
   return message ? message.dataValues : false;
 }
 
-export async function setMessage(jid = null, type = null, text = null) {
+async function setMessage(jid = null, type = null, text = null) {
   const existingMessage = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -51,7 +51,7 @@ export async function setMessage(jid = null, type = null, text = null) {
   }
 }
 
-export async function toggleStatus(jid = null, type = null) {
+async function toggleStatus(jid = null, type = null) {
   const existingMessage = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -63,11 +63,11 @@ export async function toggleStatus(jid = null, type = null) {
     return false;
   } else {
     const newStatus = !existingMessage.dataValues.status;
-    return await existingMessage.update({ chat: jid, status: newStatus });
+    return await existingMessage.update({ status: newStatus }); // Only update status
   }
 }
 
-export async function delMessage(jid = null, type = null) {
+async function delMessage(jid = null, type = null) {
   const existingMessage = await GreetingsDB.findOne({
     where: {
       chat: jid,
@@ -80,7 +80,7 @@ export async function delMessage(jid = null, type = null) {
   }
 }
 
-export async function getStatus(jid = null, type = null) {
+async function getStatus(jid = null, type = null) {
   try {
     const existingMessage = await GreetingsDB.findOne({
       where: {
@@ -95,12 +95,13 @@ export async function getStatus(jid = null, type = null) {
   }
 }
 
-export default {
+const greetingsModule = {
   GreetingsDB,
-  getMessage,
   setMessage,
-  toggleStatus,
+  getMessage,
   delMessage,
-  getStatus
+  toggleStatus,
+  getStatus,
 };
 
+export default greetingsModule;

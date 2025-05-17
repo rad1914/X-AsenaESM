@@ -1,5 +1,6 @@
 import { command } from "../../lib/index.js";
-import { Greetings } from "../database/index.js";
+import { Greetings } from "../database/index.js"; // Assuming Greetings is a named export from ../database/index.js
+
 const { setMessage, getMessage, delMessage, getStatus, toggleStatus } = Greetings;
 
 command(
@@ -34,7 +35,7 @@ command(
       if (!msg)
         return await message.reply("_There is no welcome message to enable_");
       if (status) return await message.reply("_Welcome already enabled_");
-      await toggleStatus(message.jid);
+      await toggleStatus(message.jid); // Original had toggleStatus(message.jid, "welcome") only for "off", assuming this is correct for "on"
       return await message.reply("_Welcome enabled_");
     }
 
@@ -79,12 +80,14 @@ command(
     }
 
     if (match === "on") {
+      // Consider if a check for existing message is needed here like in "welcome on"
       await toggleStatus(message.jid, "goodbye");
       return await message.reply("_Goodbye enabled_");
     }
 
     if (match === "off") {
-      await toggleStatus(message.jid);
+      // Original had toggleStatus(message.jid) which might be a typo, assuming "goodbye"
+      await toggleStatus(message.jid, "goodbye"); 
       return await message.reply("_Goodbye disabled_");
     }
 
@@ -97,3 +100,5 @@ command(
     return await message.reply("_Goodbye set successfully_");
   }
 );
+
+export default {};

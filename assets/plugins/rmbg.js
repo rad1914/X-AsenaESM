@@ -10,26 +10,36 @@ command(
     type: "image",
   },
   async (message, match, m) => {
-    if (!config.REMOVEBG)
+    if (!config.REMOVEBG) {
       return await message.sendMessage(
         message.jid,
-        "Set RemoveBg API Key in config.js \n Get it from https://www.remove.bg/api"
+        { text: "Set RemoveBg API Key in config.js \n Get it from https://www.remove.bg/api" }
       );
-    if (!message.reply_message && !message.reply_message.image)
+    }
+    if (!message.reply_message || !message.reply_message.image) {
       return await message.reply("Reply to an image");
-
+    }
+      
     let buff = await m.quoted.download();
-    let buffer = await removeBg(buff);
-    if (!buffer) return await message.reply("An error occured");
-    await message.sendMessage(
-      message.jid,
-      buffer,
-      {
-        quoted: message.reply_message.key,
-        mimetype: "image/png",
-        fileName: "removebg.png",
-      },
-      "document"
-    );
+    try {
+      let buffer = await removeBg(buff);
+      if (!buffer) return await message.reply("An error occured or API returned no data.");
+      await message.sendMessage(
+        message.jid,
+        buffer,
+        {
+          // quoted: message.reply_message.key, // Quoting might not be supported for document type directly
+          mimetype: "image/png",
+          fileName: "removebg.png",
+          caption: "Background removed!"
+        },
+        "document" // Sending as document, can also be "image" if preferred
+      );
+    } catch (error) {
+        console.error("RMBG Error:", error);
+        await message.reply("Failed to remove background. " + error.message);
+    }
   }
 );
+
+export default {};

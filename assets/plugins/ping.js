@@ -1,6 +1,5 @@
 import pkg from 'file-type';
-const { fromBuffer, mimeTypes } = pkg;
-
+const { fromBuffer, mimeTypes } = pkg; // These seem unused in this specific file
 import { command, isPrivate } from "../../lib/index.js";
 
 command(
@@ -20,3 +19,5 @@ command(
     );
   }
 );
+
+export default {};

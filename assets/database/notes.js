@@ -8,24 +8,26 @@ const NotesDB = config.DATABASE.define('notes', {
   }
 });
 
-export async function getNotes() {
+async function getNotes() {
   return await NotesDB.findAll();
 }
 
-export async function saveNote(note) {
+async function saveNote(note) {
   return await NotesDB.create({ note });
 }
 
-export async function deleteAllNotes() {
+async function deleteAllNotes() {
   return await NotesDB.destroy({
     where: {},
     truncate: true
   });
 }
 
-export default {
-NotesDB,
-getNotes,
-saveNote,
-deleteAllNotes
+const notesModule = {
+  NotesDB,
+  getNotes,
+  saveNote,
+  deleteAllNotes
 };
+
+export default notesModule;

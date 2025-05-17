@@ -1,8 +1,8 @@
-// File: assets/plugins/_menu.js
 import plugins from "../../lib/plugins.js";
-import { command, isPrivate, clockString } from "../../lib/index.js";
+import { command, isPrivate, clockString } from "../../lib/index.js"; // pm2Uptime might not be in lib/index.js, check export
 import { OWNER_NAME, BOT_NAME } from "../../config.js";
 import { hostname } from "os";
+// Note: pm2Uptime was imported but not used. If it's needed, ensure it's correctly exported from lib.
 
 command(
   {
@@ -13,6 +13,7 @@ command(
     type: "user",
   },
   async (message, match) => {
+   
     if (match) {
       for (let i of plugins.commands) {
         if (
@@ -41,17 +42,20 @@ Description: ${i.desc}\`\`\``);
       let cmnd = [];
       let cmd;
       let category = [];
-      plugins.commands.map((command) => {
+      plugins.commands.map((command, num) => {
         if (command.pattern instanceof RegExp) {
           cmd = command.pattern.toString().split(/\W+/)[1];
         }
+
         if (!command.dontAddCommandList && cmd !== undefined) {
           let type = command.type ? command.type.toLowerCase() : "misc";
+
           cmnd.push({ cmd, type });
+
           if (!category.includes(type)) category.push(type);
         }
       });
-      cmnd.sort();
+      cmnd.sort((a, b) => a.cmd.localeCompare(b.cmd)); // Sort commands alphabetically
       category.sort().forEach((cmmd) => {
         menu += `\n\t⦿---- *${cmmd.toUpperCase()}* ----⦿\n`;
         let comad = cmnd.filter(({ type }) => type == cmmd);
@@ -60,12 +64,14 @@ Description: ${i.desc}\`\`\``);
         });
         menu += `\n`;
       });
+
       menu += `\n`;
       menu += `_🔖Send ${prefix}menu <command name> to get detailed information of a specific command._\n*📍Eg:* _${prefix}menu plugin_`;
-      return await message.sendMessage(message.jid, menu);
+      return await message.sendMessage(message.jid,menu);
     }
   }
 );
+
 
 command(
   {
@@ -77,6 +83,7 @@ command(
   },
   async (message, match, { prefix }) => {
     let menu = "\t\t```Command List```\n";
+
     let cmnd = [];
     let cmd, desc;
     plugins.commands.map((command) => {
@@ -84,15 +91,17 @@ command(
         cmd = command.pattern.toString().split(/\W+/)[1];
       }
       desc = command.desc || false;
+
       if (!command.dontAddCommandList && cmd !== undefined) {
         cmnd.push({ cmd, desc });
       }
     });
-    cmnd.sort();
+    cmnd.sort((a,b) => a.cmd.localeCompare(b.cmd)); // Sort commands alphabetically
     cmnd.forEach(({ cmd, desc }, num) => {
-      menu += `\`\`${(num += 1)} ${cmd.trim()}\`\`\`\n`;
-      if (desc) menu += `Use: \`\`${desc}\`\`\`\n\n`;
+      menu += `\`\`\`${(num += 1)} ${cmd.trim()}\`\`\`\n`;
+      if (desc) menu += `Use: \`\`\`${desc}\`\`\`\n\n`;
     });
+    menu += ``;
     return await message.reply(menu);
   }
 );

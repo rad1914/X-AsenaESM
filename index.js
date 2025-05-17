@@ -1,23 +1,29 @@
-import fs from "fs/promises";
-import fsSync from "fs"; // For sync methods like existsSync, mkdirSync, writeFileSync
-import path from "path";
-import config from "./config.js";
-import connect from "./lib/connection.js";
-import { loadSession } from "baileys";
-import io from "socket.io-client";
-import { getandRequirePlugins } from "./assets/database/plugins.js";
+import { readdir } from 'fs/promises';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { dirname } from 'path';
 
-global.__basedir = path.dirname(new URL(import.meta.url).pathname); // base directory
+import config from './config.js';
+import connect from './lib/connection.js'; // Assuming lib/connection.js exists and uses ESM
+import { loadSession } from 'baileys';
+import ioClient from 'socket.io-client';
+import { getandRequirePlugins } from './assets/database/plugins.js'; // Assuming this file is or will be ESM
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+global.__basedir = __dirname; // Set the base directory for the project
 
 const readAndRequireFiles = async (directory) => {
   try {
-    const files = await fs.readdir(directory);
+    const files = await readdir(directory);
     return Promise.all(
       files
         .filter((file) => path.extname(file).toLowerCase() === ".js")
-        .map(async (file) => {
-          const mod = await import(path.join(directory, file).replace(/\\/g, "/"));
-          return mod;
+        .map((file) => {
+          const modulePath = path.join(directory, file);
+          const moduleURL = pathToFileURL(modulePath).href;
+          return import(moduleURL); // Dynamically import modules (primarily for side-effects)
         })
     );
   } catch (error) {
@@ -29,25 +35,25 @@ const readAndRequireFiles = async (directory) => {
 async function initialize() {
   console.log("X-Asena");
   try {
-    if (config.SESSION_ID && !fsSync.existsSync("session")) {
+    if (config.SESSION_ID && !existsSync("./session")) {
       console.log("loading session from session id...");
-      fsSync.mkdirSync("./session");
+      mkdirSync("./session");
       const credsData = await loadSession(config.SESSION_ID);
-      fsSync.writeFileSync(
+      writeFileSync(
         "./session/creds.json",
         JSON.stringify(credsData.creds, null, 2)
       );
     }
-    await readAndRequireFiles(path.join(global.__basedir, "/assets/database/"));
+    await readAndRequireFiles(path.join(__dirname, "/assets/database/"));
     console.log("Syncing Database");
 
     await config.DATABASE.sync();
 
     console.log("⬇  Installing Plugins...");
-    await readAndRequireFiles(path.join(global.__basedir, "/assets/plugins/"));
+    await readAndRequireFiles(path.join(__dirname, "/assets/plugins/"));
     await getandRequirePlugins();
     console.log("✅ Plugins Installed!");
-    const ws = io("https://socket.xasena.me/", { reconnection: true });
+    const ws = ioClient("https://socket.xasena.me/", { reconnection: true });
     ws.on("connect", () => console.log("Connected to server"));
     ws.on("disconnect", () => console.log("Disconnected from server"));
     return await connect();

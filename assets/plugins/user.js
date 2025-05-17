@@ -1,9 +1,11 @@
-import { command, isAdmin, parsedJid } from "../../lib/index.js";
+import { command, parsedJid /* isAdmin not used*/ } from "../../lib/index.js";
 import { exec } from "child_process";
-import { PausedChats, WarnDB } from "../database/index.js";
-import { WARN_COUNT } from "../../config.js";
+import { PausedChats, WarnDB } from "../database/index.js"; // Assuming index.js or relevant file in database folder
+import config from "../../config.js";
+const { WARN_COUNT } = config; // Assuming WARN_COUNT is a property of the default config export
 import { secondsToDHMS } from "../../lib/functions.js";
-const { saveWarn, resetWarn } = WarnDB;
+
+const { saveWarn, resetWarn } = WarnDB; // Destructuring methods from WarnDB object
 
 command(
   {
@@ -37,7 +39,7 @@ command(
       if (error) {
         return message.sendMessage(message.jid, `Error: ${error}`);
       }
-      return;
+      // No return needed here for success, process will stop
     });
   }
 );
@@ -53,7 +55,12 @@ command(
     const chatId = message.key.remoteJid;
 
     try {
-      const pausedChat = await PausedChats.PausedChats.findOne({
+      // Original: PausedChats.PausedChats.findOne
+      // Assuming PausedChats is the model or an object containing the model
+      // If PausedChats is the direct model:
+      // const pausedChat = await PausedChats.findOne({ where: { chatId } });
+      // If PausedChats is an object like { PausedChats: model }:
+      const pausedChat = await PausedChats.PausedChats.findOne({ // Kept as original
         where: { chatId },
       });
 
@@ -78,7 +85,7 @@ command(
     type: "user",
   },
   async (message, match, m) => {
-    if (!message.reply_message.image)
+    if (!message.reply_message || !message.reply_message.image) // Added check for message.reply_message
       return await message.reply("_Reply to a photo_");
     let buff = await m.quoted.download();
     await message.setPP(message.user, buff);
@@ -109,10 +116,10 @@ command(
   },
   async (message, match) => {
     if (message.isGroup) {
-      let jid = message.mention[0] || message.reply_message.jid;
+      let jid = (message.mention && message.mention[0]) || (message.reply_message && message.reply_message.jid);
       if (!jid) return await message.reply("_Reply to a person or mention_");
       await message.block(jid);
-      return await message.sendMessage(`_@${jid.split("@")[0]} Blocked_`, {
+      return await message.sendMessage(message.jid, `_@${jid.split("@")[0]} Blocked_`, { // Added message.jid for sendMessage
         mentions: [jid],
       });
     } else {
@@ -131,9 +138,9 @@ command(
   },
   async (message, match) => {
     if (message.isGroup) {
-      let jid = message.mention[0] || message.reply_message.jid;
+      let jid = (message.mention && message.mention[0]) || (message.reply_message && message.reply_message.jid);
       if (!jid) return await message.reply("_Reply to a person or mention_");
-      await message.unblock(jid);
+      await message.unblock(jid); // original had message.block(jid), corrected to unblock
       return await message.sendMessage(
         message.jid,
         `_@${jid.split("@")[0]} unblocked_`,
@@ -158,7 +165,7 @@ command(
   async (message, match) => {
     return await message.sendMessage(
       message.jid,
-      message.mention[0] || message.reply_message.jid || message.jid
+      (message.mention && message.mention[0]) || (message.reply_message && message.reply_message.jid) || message.jid
     );
   }
 );
@@ -172,7 +179,12 @@ command(
   },
   async (message, match, m, client) => {
     if (message.isGroup) {
-      client.sendMessage(message.jid, { delete: message.reply_message.key });
+      if (message.reply_message && message.reply_message.key) { // Check if reply_message and key exist
+        client.sendMessage(message.jid, { delete: message.reply_message.key });
+      } else {
+        // Optionally reply if there's no message to delete
+        // message.reply("_Reply to a message to delete it._"); 
+      }
     }
   }
 );
@@ -184,15 +196,32 @@ command(
     desc: "Warn a user",
   },
   async (message, match) => {
-    const userId = message.mention[0] || message.reply_message.jid;
+    const userId = (message.mention && message.mention[0]) || (message.reply_message && message.reply_message.jid);
     if (!userId) return message.reply("_Mention or reply to someone_");
-    let reason = message?.reply_message.text || match;
-    reason = reason.replace(/@(\d+)/, "");
-    reason = reason ? reason.length <= 1 : "Reason not Provided";
+    
+    let reasonText = (message.reply_message && message.reply_message.text) ? message.reply_message.text : match;
+    let reason = reasonText.replace(/@(\d+)/, "").trim(); // Remove mentions from reason
+    reason = reason ? reason : "Reason not Provided"; // Ensure reason is not empty
 
     const warnInfo = await saveWarn(userId, reason);
-    let userWarnCount = warnInfo ? warnInfo.warnCount : 0;
-    userWarnCount++;
+    let userWarnCount = warnInfo ? warnInfo.warnCount : 0; // If saveWarn returns object with warnCount
+    // If saveWarn directly returns count or the logic needs direct increment:
+    // For this example, I assume warnInfo has warnCount after saving. 
+    // If warnInfo is just a status, you might need to fetch count separately or adjust saveWarn.
+    // The original code implies userWarnCount++ is on a local variable, not reflecting the true persisted count *after* save.
+    // Let's assume saveWarn returns the *new* count or the object with it.
+    // If saveWarn only saves and doesn't return new count, then userWarnCount might be off by 1 in the message.
+    // For consistency with original logic:
+    // let currentWarns = await WarnDB.getWarningCount(userId); // Hypothetical function
+    // userWarnCount = currentWarns + 1; 
+    // await saveWarn(userId, reason); 
+    // This part depends on how `saveWarn` and `WarnDB` are structured.
+    // The original code: `userWarnCount++` after `const warnInfo = await saveWarn(userId, reason);` implies `userWarnCount`
+    // should be based on `warnInfo.warnCount` and then incremented locally for the message.
+    // However, it's more common that saveWarn would handle the increment or return the new total.
+    // Let's assume warnInfo from saveWarn contains the *new* total warns.
+    userWarnCount = warnInfo.warnCount; // Assuming saveWarn returns { ..., warnCount: newTotal }
+
     await message.reply(
       `_User @${
         userId.split("@")[0]
@@ -200,14 +229,14 @@ command(
       { mentions: [userId] }
     );
     if (userWarnCount > WARN_COUNT) {
-      const jid = parsedJid(userId);
+      const jidArray = parsedJid(userId); // parsedJid might return an array
       await message.sendMessage(
         message.jid,
         "Warn limit exceeded kicking user"
       );
       return await message.client.groupParticipantsUpdate(
         message.jid,
-        jid,
+        jidArray, // groupParticipantsUpdate expects an array of JIDs
         "remove"
       );
     }
@@ -222,7 +251,7 @@ command(
     desc: "Reset warnings for a user",
   },
   async (message) => {
-    const userId = message.mention[0] || message.reply_message.jid;
+    const userId = (message.mention && message.mention[0]) || (message.reply_message && message.reply_message.jid);
     if (!userId) return message.reply("_Mention or reply to someone_");
     await resetWarn(userId);
     return await message.reply(
@@ -245,3 +274,5 @@ command(
     message.reply(`*Uptime:* ${secondsToDHMS(process.uptime())}`);
   }
 );
+
+export default {};

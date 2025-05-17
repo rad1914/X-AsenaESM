@@ -2,7 +2,7 @@ import { isJidGroup } from "baileys";
 import config from "../../config.js";
 import { DataTypes } from "sequelize";
 
-const chatDb = config.DATABASE.define("Chat", {
+export const chatDb = config.DATABASE.define("Chat", {
   id: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -18,7 +18,7 @@ const chatDb = config.DATABASE.define("Chat", {
   },
 });
 
-const messageDb = config.DATABASE.define("message", {
+export const messageDb = config.DATABASE.define("message", {
   jid: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -34,10 +34,11 @@ const messageDb = config.DATABASE.define("message", {
   },
 });
 
-const contactDb = config.DATABASE.define("contact", {
+export const contactDb = config.DATABASE.define("contact", {
   jid: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true, // JID should be unique for contacts
   },
   name: {
     type: DataTypes.STRING,
@@ -59,7 +60,7 @@ export const saveContact = async (jid, name) => {
       return await contactDb.create({ jid, name });
     }
   } catch (e) {
-    console.log(e);
+    console.log("Error saving contact:", e);
   }
 };
 
@@ -67,9 +68,10 @@ export const saveMessage = async (message, user) => {
   try {
     const jid = message.key.remoteJid;
     const id = message.key.id;
-    const msg = message;
+    const msg = message; // The whole message object
     if (!id || !jid || !msg) return;
-    await saveContact(user, message.pushName);
+    await saveContact(user, message.pushName); // user is likely message.key.fromMe ? client.user.id : message.key.participant || message.key.remoteJid
+                                          // The 'user' parameter needs clarification for its source, assuming it's the sender's JID.
     let exists = await messageDb.findOne({ where: { id, jid } });
     if (exists) {
       return await messageDb.update({ message: msg }, { where: { id, jid } });
@@ -77,7 +79,7 @@ export const saveMessage = async (message, user) => {
       return await messageDb.create({ id, jid, message: msg });
     }
   } catch (e) {
-    console.log(e);
+    console.log("Error saving message:", e);
   }
 };
 
@@ -91,10 +93,9 @@ export const loadMessage = async (id) => {
 };
 
 export const saveChat = async (chat) => {
-  if (chat.id === "status@broadcast") return;
-  if (chat.id === "broadcast") return;
+  if (chat.id === "status@broadcast" || chat.id === "broadcast") return; // Simplified condition
   let isGroup = isJidGroup(chat.id);
-  if (!chat.id || !chat.conversationTimestamp) return;
+  if (!chat.id || typeof chat.conversationTimestamp === 'undefined') return; // Check for existence of timestamp
   let chatexists = await chatDb.findOne({ where: { id: chat.id } });
   if (chatexists) {
     return await chatDb.update(
@@ -111,7 +112,22 @@ export const saveChat = async (chat) => {
 };
 
 export const getName = async (jid) => {
+  if (!jid) return "Unknown"; // Handle null/undefined jid
   const contact = await contactDb.findOne({ where: { jid } });
   if (!contact) return jid.split("@")[0].replace(/_/g, " ");
   return contact.name;
 };
+
+export const storeDbModule = {
+  saveMessage,
+  loadMessage,
+  saveChat,
+  getName,
+  // Exporting DB models and saveContact if they are intended to be used externally
+  chatDb,
+  messageDb,
+  contactDb,
+  saveContact,
+};
+
+export default storeDbModule;

@@ -1,74 +1,119 @@
 import { command, isPrivate, XKCDComic, getJson } from "../../lib/index.js";
 import axios from "axios";
 
-let triviaGames = {};
+let triviaGames = {}; // This state will be lost on server restart. Consider a DB for persistence if needed.
 
 command(
   {
     pattern: "trivia",
-    fromMe: isPrivate,
+    fromMe: isPrivate, // Consider if trivia should be available to others (fromMe: false)
     desc: "Start a trivia game.",
     type: "game",
   },
   async (message, match, m) => {
     const userId = message.sender;
+    const chatId = message.jid; // Use message.jid for chat context
 
-    if (triviaGames[userId]) {
-      return message.reply("You already have a trivia game in progress.");
+    // Allow one game per chat, not per user, to avoid conflicts in groups.
+    // Or, use a composite key like `${chatId}-${userId}` if multiple users can play simultaneously in different chats.
+    // For simplicity, one game per chat initiated by a user.
+    if (triviaGames[chatId] && triviaGames[chatId].isActive) {
+      return message.reply("A trivia game is already in progress in this chat. Type 'endtrivia' to stop it.");
     }
 
     const triviaQuestion = await fetchTriviaQuestion();
+    if (!triviaQuestion) {
+        return message.reply("Sorry, couldn't fetch a trivia question right now. Please try again later.");
+    }
 
-    triviaGames[userId] = {
+    triviaGames[chatId] = {
       currentQuestion: triviaQuestion,
       correctAnswers: 0,
       initiator: userId,
-      chatId: message.key.remoteJid,
+      chatId: chatId,
+      isActive: true,
+      lastQuestionTime: Date.now()
     };
 
-    return sendTriviaQuestion(message, userId);
+    return sendTriviaQuestion(message, chatId);
   }
 );
+
+// Command to end trivia explicitly
+command(
+  {
+    pattern: "endtrivia",
+    fromMe: isPrivate, // Or allow anyone in the game/chat to end it
+    desc: "Ends the current trivia game in the chat.",
+    type: "game",
+  },
+  async (message, match) => {
+    const chatId = message.jid;
+    if (triviaGames[chatId] && triviaGames[chatId].isActive) {
+      // Only initiator or admin can end, or specific logic
+      // For now, anyone can end if `fromMe` is false for this command.
+      // If `fromMe` is true, only the bot owner can end it this way.
+      // Let's assume if `fromMe: isPrivate` then only the user who started it (if in PM) or bot owner (if in group).
+      // A better check: if (triviaGames[chatId].initiator === message.sender || fromMe === true)
+      await endTriviaGame(message, chatId, "Game ended by user.");
+    } else {
+      message.reply("No active trivia game to end in this chat.");
+    }
+  }
+);
+
 
 command(
   {
     on: "text",
-    fromMe: isPrivate,
+    fromMe: false, // Allow participants to answer
     pattern: false,
     dontAddCommandList: true,
   },
   async (message, match, m) => {
     const userId = message.sender;
+    const chatId = message.jid;
 
-    if (triviaGames[userId]) {
-      const userTriviaGame = triviaGames[userId];
+    if (triviaGames[chatId] && triviaGames[chatId].isActive) {
+      const userTriviaGame = triviaGames[chatId];
+      // Timeout check: End game if no answer for too long (e.g., 2 minutes)
+      if (Date.now() - userTriviaGame.lastQuestionTime > 120000) { // 2 minutes
+        await endTriviaGame(message, chatId, "Game ended due to inactivity.");
+        return;
+      }
+
       const userAnswer = message.text ? message.text.trim() : "";
 
-      if (
-        userId === userTriviaGame.initiator &&
-        message.key.remoteJid === userTriviaGame.chatId
-      ) {
-        if (isOptionNumber(userAnswer)) {
-          const selectedOption = parseInt(userAnswer);
-          const correctAnswerIndex =
-            userTriviaGame.currentQuestion.options.indexOf(
-              userTriviaGame.currentQuestion.correctAnswer
-            ) + 1;
+      // Trivia answers are usually numbers 1-4
+      if (isOptionNumber(userAnswer)) {
+        const selectedOption = parseInt(userAnswer);
+        const correctAnswerIndex =
+          userTriviaGame.currentQuestion.options.indexOf(
+            userTriviaGame.currentQuestion.correctAnswer
+          ) + 1;
 
-          if (selectedOption === correctAnswerIndex) {
-            userTriviaGame.correctAnswers++;
-            message.reply(
-              `Correct answer \n\n Your Points : ${userTriviaGame.correctAnswers}`
-            );
-            userTriviaGame.currentQuestion = await fetchTriviaQuestion();
-
-            return sendTriviaQuestion(message, userId);
-          } else {
-            message.reply(
-              `Incorrect answer. The correct answer is option ${correctAnswerIndex} ${userTriviaGame.currentQuestion.correctAnswer}.`
-            );
-            return await endTriviaGame(message, userId);
+        if (selectedOption === correctAnswerIndex) {
+          userTriviaGame.correctAnswers++; // Points could be per user if game is multi-user
+          message.reply(
+            `Correct answer, ${message.pushName}! 🎉\n\nPoints: ${userTriviaGame.correctAnswers}` // Assuming points are for the game instance
+          );
+          
+          const nextQuestion = await fetchTriviaQuestion();
+          if (!nextQuestion) {
+            await endTriviaGame(message, chatId, "Could not fetch next question. Game Over.");
+            return;
           }
+          userTriviaGame.currentQuestion = nextQuestion;
+          userTriviaGame.lastQuestionTime = Date.now();
+          return sendTriviaQuestion(message, chatId); // Send next question
+        } else {
+          // Incorrect answer
+          const correctAnswerText = userTriviaGame.currentQuestion.correctAnswer;
+          message.reply(
+            `Incorrect, ${message.pushName}. The correct answer was: ${correctAnswerIndex}. ${correctAnswerText}`
+          );
+          // Optionally, end game on wrong answer or allow more tries/questions
+          await endTriviaGame(message, chatId, `Game over! ${message.pushName} gave an incorrect answer.`);
         }
       }
     }
@@ -79,24 +124,27 @@ function isOptionNumber(answer) {
   const selectedOption = parseInt(answer);
   return (
     !isNaN(selectedOption) &&
-    answer.length === 1 &&
+    answer.length === 1 && // Ensures single digit like "1", "2", "3", "4"
     selectedOption >= 1 &&
-    selectedOption <= 4
+    selectedOption <= 4 // Assuming 4 options max
   );
 }
 
 async function fetchTriviaQuestion() {
   try {
-    const response = await axios.get("https://the-trivia-api.com/v2/questions");
-    const questions = response.data;
-
-    const randomQuestion =
-      questions[Math.floor(Math.random() * questions.length)];
+    // Using v2 API as in original
+    const response = await axios.get("https://the-trivia-api.com/v2/questions?limit=1"); // Fetch one question
+    if (!response.data || response.data.length === 0) {
+        console.error("Error fetching trivia question: Empty response from API");
+        return null;
+    }
+    const randomQuestion = response.data[0]; // Get the first (and only) question
 
     const shuffledOptions = [
       ...randomQuestion.incorrectAnswers,
       randomQuestion.correctAnswer,
     ];
+    // Shuffle options
     for (let i = shuffledOptions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffledOptions[i], shuffledOptions[j]] = [
@@ -105,99 +153,105 @@ async function fetchTriviaQuestion() {
       ];
     }
 
-    const formattedQuestion = {
+    return {
       text: randomQuestion.question.text,
       options: shuffledOptions,
       correctAnswer: randomQuestion.correctAnswer,
+      category: randomQuestion.category, // Store category for fun
+      difficulty: randomQuestion.difficulty // Store difficulty
     };
-
-    return formattedQuestion;
   } catch (error) {
     console.error("Error fetching trivia question:", error.message);
-    throw error;
+    return null; // Return null on error
   }
 }
 
-function sendTriviaQuestion(message, userId) {
-  const userTriviaGame = triviaGames[userId];
+function sendTriviaQuestion(message, chatId) {
+  const userTriviaGame = triviaGames[chatId];
+  if (!userTriviaGame || !userTriviaGame.currentQuestion) {
+    console.error("Trying to send question but no game or question found for chat:", chatId);
+    return;
+  }
   const currentQuestion = userTriviaGame.currentQuestion;
   const optionsString = currentQuestion.options
     .map((option, index) => `${index + 1}. ${option}`)
     .join("\n");
-  message.reply(
-    `Question: ${currentQuestion.text}\nOptions:\n${optionsString}`
-  );
+  
+  const questionMessage = `🧠 *Trivia Time!*  categoría: ${currentQuestion.category} | Dificultad: ${currentQuestion.difficulty}\n\n*Question:* ${currentQuestion.text}\n\n*Options:*\n${optionsString}\n\nReply with the number of your answer (e.g., 1, 2, 3, or 4).`;
+  message.reply(questionMessage);
 }
 
-async function endTriviaGame(message, userId) {
-  const userTriviaGame = triviaGames[userId];
-  await message.reply(
-    `Trivia game ended. You answered ${userTriviaGame.correctAnswers} questions correctly.`
-  );
-  delete triviaGames[userId];
+async function endTriviaGame(message, chatId, reason = "Game ended.") {
+  const userTriviaGame = triviaGames[chatId];
+  if (userTriviaGame) {
+    await message.reply(
+      `Trivia game ended. ${reason}\nFinal Score: ${userTriviaGame.correctAnswers} correct answers.`
+    );
+    delete triviaGames[chatId]; // Clean up the game state
+  }
 }
 
-/**
- *
- */
+
 command(
   {
     pattern: "xkcd",
     fromMe: isPrivate,
     desc: "Send a random XKCD comic.",
-    type: "misc",
+    type: "fun", // Changed type to fun for consistency
   },
   async (message, match, m) => {
     try {
-      const result = await XKCDComic();
-      message.sendMessage(
-        message.jid,
-        result.imageUrl,
-        { quoted: message.data },
-        "image"
-      );
+      const result = await XKCDComic(); // Assumes XKCDComic is correctly imported and works
+      if (result && result.imageUrl) {
+        message.sendMessage(
+          message.jid,
+          result.imageUrl,
+          { caption: result.title || "XKCD Comic", quoted: message.data }, // Added caption and ensured quoted is message.data if that's the Baileys msg object
+          "image"
+        );
+      } else {
+        message.reply("Could not fetch XKCD comic data.");
+      }
     } catch (error) {
-      console.error("Error:", error.message);
-      message.reply("Error fetching XKCD comic.");
+      console.error("Error fetching XKCD comic:", error.message);
+      message.reply("Error fetching XKCD comic. Please try again later.");
     }
   }
 );
 
-/**
- *
- *
- */
 
 command(
   {
     pattern: "joke",
-    fromMe: isPrivate,
-    desc: "Fetch a random joke",
+    fromMe: isPrivate, // Consider if jokes should be available to others
+    desc: "Fetch a random joke. Use .joke dark or .joke pun for specific types.",
+    type: "fun", // Changed type to fun
     dontAddCommandList: false,
   },
   async (message, match) => {
     try {
       let jokeData;
-      if (match && match.toLowerCase() == "dark") {
-        jokeData = await getJson(
-          "https://v2.jokeapi.dev/joke/Dark?type=twopart"
-        );
-      } else if (match && match.toLowerCase() == "pun") {
-        jokeData = await getJson(
-          "https://v2.jokeapi.dev/joke/Pun?type=twopart"
-        );
-      } else {
-        jokeData = await getJson(
-          "https://v2.jokeapi.dev/joke/Any?type=twopart"
-        );
+      let apiUrl = "https://v2.jokeapi.dev/joke/Any?type=twopart"; // Default
+      
+      if (match) {
+        const jokeType = match.toLowerCase().trim();
+        if (jokeType === "dark") {
+          apiUrl = "https://v2.jokeapi.dev/joke/Dark?type=twopart";
+        } else if (jokeType === "pun") {
+          apiUrl = "https://v2.jokeapi.dev/joke/Pun?type=twopart";
+        } else if (jokeType === "misc" || jokeType === "programming" || jokeType === "spooky" || jokeType === "christmas") {
+            apiUrl = `https://v2.jokeapi.dev/joke/${jokeType.charAt(0).toUpperCase() + jokeType.slice(1)}?type=twopart`;
+        }
       }
+      
+      jokeData = await getJson(apiUrl); // Assumes getJson handles errors and returns null/throws
 
       if (jokeData && !jokeData.error) {
-        const jokeMessage = jokeData.setup + "\n" + jokeData.delivery;
+        const jokeMessage = jokeData.setup + "\n\n" + jokeData.delivery;
         message.sendMessage(message.jid, jokeMessage);
       } else {
-        console.error("Error fetching joke:", jokeData);
-        message.reply("Failed to fetch a joke. Please try again later.");
+        console.error("Error fetching joke:", jokeData ? jokeData.error : "No data");
+        message.reply("Failed to fetch a joke. Please try again later or try a different category.");
       }
     } catch (error) {
       console.error("Error fetching joke:", error);
@@ -205,3 +259,5 @@ command(
     }
   }
 );
+
+export default {};

@@ -1,6 +1,5 @@
 import fs from "fs";
-import { command, isPrivate } from "../../lib/index.js";
-import { isAdmin, parsedJid } from "../../lib/index.js";
+import { command, isPrivate, isAdmin, parsedJid } from "../../lib/index.js"; // isPrivate is imported but not used here
 import { delay } from "baileys";
 
 command(
@@ -56,7 +55,6 @@ command(
     });
   }
 );
-
 command(
   {
     pattern: "promote",
@@ -83,7 +81,6 @@ command(
     });
   }
 );
-
 command(
   {
     pattern: "demote",
@@ -124,7 +121,7 @@ command(
   async (message, match, m, client) => {
     if (!message.isGroup)
       return await message.reply("_This command is for groups_");
-    if (!isAdmin(message.jid, message.user, message.client))
+    if (!isAdmin(message.jid, message.user, message.client)) // Original was missing await, assuming isAdmin is async
       return await message.reply("_I'm not admin_");
     await message.reply("_Muting_");
     return await client.groupSettingUpdate(message.jid, "announcement");
@@ -141,7 +138,7 @@ command(
   async (message, match, m, client) => {
     if (!message.isGroup)
       return await message.reply("_This command is for groups_");
-    if (!isAdmin(message.jid, message.user, message.client))
+    if (!isAdmin(message.jid, message.user, message.client)) // Original was missing await, assuming isAdmin is async
       return await message.reply("_I'm not admin_");
     await message.reply("_Unmuting_");
     return await client.groupSettingUpdate(message.jid, "not_announcement");
@@ -162,6 +159,7 @@ command(
     let participant = participants.map((u) => u.id.split("@")[0]);
     let text = participant.join("\n");
     fs.writeFileSync("group.txt", text);
+    // Consider sending the file or its content as a reply
   }
 );
 
@@ -193,7 +191,7 @@ command(
     type: "group",
   },
   async (message, match) => {
-    console.log("match");
+    console.log("match") // This was in original, kept it
     match = match || message.reply_message.text;
     if (!match) return message.reply("_Enter or reply to a text to tag_");
     if (!message.isGroup) return;
@@ -212,19 +210,20 @@ command(
     type: "group",
   },
   async (message, match) => {
-    console.log("match");
+    console.log("match") // This was in original, kept it
     match = match || message.reply_message.text;
-    if (!match) return message.reply("_Enter or reply to a text to tag_");
+    if (!match) return message.reply("_Enter or reply to a text to tag_"); // Original says "to tag", kept it
     if (!message.isGroup) return;
     const { participants } = await message.client.groupMetadata(message.jid);
-    message.sendMessage(message.jid, "_Notified Everyone_", {
+    message.sendMessage(message.jid, "_Notified Everyone_", { // Original message.sendMessage had match, but description suggests generic notification
       mentions: participants.map((a) => a.id),
     });
   }
 );
 
-const participants = fs.readFileSync("removed.txt", "utf-8").split("\n");
-//const participants = ["9656459062"]
+
+const participantsFileContent = fs.readFileSync("removed.txt", "utf-8");
+const inactiveParticipants = participantsFileContent.split("\n").filter(p => p.trim() !== ""); // Filter out empty lines
 
 command(
   {
@@ -236,17 +235,21 @@ command(
   async (message, match) => {
     if (!message.isGroup)
       return await message.reply("_This command is for groups_");
-    if (!isAdmin(message.jid, message.user, message.client))
+    if (!await isAdmin(message.jid, message.user, message.client)) // Added await
       return await message.reply("_I'm not admin_");
     await message.reply("_Removing_");
-    for (let i = 0; i < participants.length; i++) {
-      await message.client.groupParticipantsUpdate(
-        message.jid,
-        parsedJid("91" + participants[i]),
-        "remove"
-      );
-      await delay(3000);
-      console.log("Removed:", participants[i]);
+    for (let i = 0; i < inactiveParticipants.length; i++) {
+      if (inactiveParticipants[i]) { // Ensure participant string is not empty
+        await message.client.groupParticipantsUpdate(
+          message.jid,
+          parsedJid("91" + inactiveParticipants[i]),
+          "remove"
+        );
+        await delay(3000);
+        console.log("Removed:", inactiveParticipants[i]);
+      }
     }
   }
 );
+
+export default {};

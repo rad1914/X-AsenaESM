@@ -1,7 +1,7 @@
 import config from '../../config.js';
 import { DataTypes } from 'sequelize';
 
-const PausedChats = config.DATABASE.define('pausedChats', {
+const PausedChatsDB = config.DATABASE.define('pausedChats', { // Renamed to PausedChatsDB for clarity if needed
   chatId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -9,24 +9,26 @@ const PausedChats = config.DATABASE.define('pausedChats', {
   }
 });
 
-export async function getPausedChats() {
-  return await PausedChats.findAll();
+async function getPausedChats() {
+  return await PausedChatsDB.findAll();
 }
 
-export async function savePausedChat(chatId) {
-  return await PausedChats.create({ chatId });
+async function savePausedChat(chatId) {
+  return await PausedChatsDB.create({ chatId });
 }
 
-export async function deleteAllPausedChats() {
-  return await PausedChats.destroy({
+async function deleteAllPausedChats() {
+  return await PausedChatsDB.destroy({
     where: {},
     truncate: true
   });
 }
 
-export default {
-  PausedChats,
+const pausedChatModule = {
+  PausedChats: PausedChatsDB, // Exporting the DB model as PausedChats as per original index.js
   getPausedChats,
   savePausedChat,
   deleteAllPausedChats
 };
+
+export default pausedChatModule;

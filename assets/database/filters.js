@@ -73,9 +73,11 @@ export async function deleteFilter(jid = null, filter) {
   }
 }
 
-export default {
+const filtersModule = {
   FiltersDB,
   getFilter,
   setFilter,
-  deleteFilter
+  deleteFilter,
 };
+
+export default filtersModule;

@@ -10,6 +10,6 @@ export declare class TicTacToe {
     _turns: number;
     constructor(playerX: string, playerY: string);
     get board(): number;
-    turn(player: string, index: number): boolean;
-    turn(player: string, x: number, y: number): boolean;
+    turn(player, index: number): boolean;
+    turn(player, x: number, y: number): boolean;
 }

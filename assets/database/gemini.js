@@ -14,29 +14,41 @@ const GeminiDB = config.DATABASE.define("Geminis", {
 });
 
 const SaveGemini = async (chatid, parts) => {
-  try {
-    const gemini = await GeminiDB.findOne({ where: { chatid } });
-    if (!gemini) {
-      await GeminiDB.create({ chatid, history: parts });
-      return;
+  return new Promise(async (resolve, reject) => {
+    try {
+      const gemini = await GeminiDB.findOne({ where: { chatid } });
+      if (!gemini) {
+        await GeminiDB.create({ chatid, history: parts });
+        // Resolve after creation if new
+        resolve(); // Or resolve with the created instance if needed
+        return;
+      }
+      let part = gemini.history || []; // Ensure part is an array
+      part.push(parts); // parts should be an object {role, parts: [{text}]}
+                       // if 'parts' itself is the array of such objects, then history should be parts.concat(gemini.history) or similar
+                       // Assuming 'parts' is a new history entry {role, parts: [{text}]}
+      await gemini.update({ history: part });
+      resolve();
+    } catch (e) {
+      console.log(util.format(e));
+      reject(e); // It's good practice to reject promises on error
     }
-    let part = gemini.history;
-    part.push(parts);
-    await gemini.update({ chatid, history: part });
-  } catch (e) {
-    console.log(util.format(e));
-  }
+  });
 };
 
 const GetGemini = async (chatid) => {
-  try {
-    const gemini = await GeminiDB.findOne({ where: { chatid } });
-    if (!gemini) return [];
-    return gemini;
-  } catch (e) {
-    console.log(util.format(e));
-    return [];
-  }
+  return new Promise(async (resolve, reject) => {
+    try {
+      const gemini = await GeminiDB.findOne({ where: { chatid } });
+      if (!gemini) return resolve([]);
+      resolve(gemini.history); // Resolve with the actual history
+    } catch (e) {
+      console.log(util.format(e));
+      resolve([]); // Or reject(e)
+    }
+  });
 };
 
-export { SaveGemini, GetGemini };
+const geminiModule = { SaveGemini, GetGemini, GeminiDB }; // Added GeminiDB to exports if needed elsewhere
+
+export default geminiModule;

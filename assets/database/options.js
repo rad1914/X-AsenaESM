@@ -1,7 +1,7 @@
 import config from "../../config.js";
 import { DataTypes } from "sequelize";
 
-const options = config.DATABASE.define("Options", {
+const optionsDB = config.DATABASE.define("Options", { // Renamed model for clarity
   chat: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -17,23 +17,23 @@ const options = config.DATABASE.define("Options", {
 });
 
 async function toggle(jid = null, type = null) {
-  const existingMessage = await options.findOne({
-    where: {
-      chat: jid,
-      type,
-    },
-  });
-
-  if (!existingMessage) {
-    return await options.create({
-      chat: jid,
-      type,
-      status: true,
+    const existingMessage = await optionsDB.findOne({
+      where: {
+        chat: jid,
+        type,
+      },
     });
-  } else {
-    const newStatus = !existingMessage.dataValues.status;
-    return await existingMessage.update({ chat: jid, status: newStatus });
+  
+    if (!existingMessage) {
+        return await optionsDB.create({
+            chat: jid,
+            type,
+            status: true,
+          });
+    } else {
+      const newStatus = !existingMessage.dataValues.status;
+      return await existingMessage.update({ status: newStatus }); // Only update status
+    }
   }
-}
 
-export default toggle;
+export default toggle; // Default export for the single function

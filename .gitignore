@@ -1,9 +1,6 @@
-node_modules/
-session/
-.env
-
-# Ignore the build directory
-
-assets/plugins/eval.js
-assets/database/store.json
-assets/database.db
+node_modules
+# Ignore session keys
+# Ignore session keys
+/node_modules1/
+core
+session

@@ -25,3 +25,5 @@ command(
     );
   }
 );
+
+export default {};

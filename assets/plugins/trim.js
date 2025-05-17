@@ -1,6 +1,5 @@
 import pkg from 'file-type';
-const { fromBuffer, mimeTypes } = pkg;
-
+const { fromBuffer } = pkg;
 import { command, isPrivate } from "../../lib/index.js";
 import { ffmpeg, parseTimeToSeconds } from "../../lib/functions.js";
 
@@ -32,9 +31,11 @@ command(
     const startSeconds = parseTimeToSeconds(start);
     const endSeconds = parseTimeToSeconds(end);
     const duration = endSeconds - startSeconds;
-    const ext = (await fromBuffer(buffer)).ext;
+    const { ext } = await fromBuffer(buffer); // fromBuffer returns an object {ext, mime}
     const args = ["-ss", `${startSeconds}`, "-t", `${duration}`, "-c", "copy"];
     const trimmedBuffer = await ffmpeg(buffer, args, ext, ext);
     message.sendFile(trimmedBuffer);
   }
 );
+
+export default {};

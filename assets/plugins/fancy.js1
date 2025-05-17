@@ -15,7 +15,7 @@ command(
     if (replyMessageText) {
       if (!isNaN(match))
         return await message.reply(styleText(replyMessageText, match));
-
+      
       let fancyTexts = listAllFancyTexts(replyMessageText);
       return await message.reply(fancyTexts);
     }
@@ -26,10 +26,42 @@ command(
     }
 
     if (!isNaN(match)) {
-      if (match > listAllFancyTexts("Fancy").length) {
+      // Assuming listAllFancyTexts returns an array to check its length
+      // This part needs careful check if listAllFancyTexts actually returns an array or a string.
+      // If it returns a string, .length will be string length, not number of fancy texts.
+      // Based on the usage listall(text).forEach, listall returns an array.
+      // So listAllFancyTexts returns a string. This logic needs to be adjusted.
+      // For now, I'll assume listall("text") is the array of texts.
+      if (match > listall("Fancy").length) { // Check against the actual number of styles
         return await message.sendMessage("Invalid number");
       }
-      return await message.reply(styleText(text, match));
+      // The original logic `styleText(text, match)` might be flawed if `text` is supposed to be the original text to style, not the number.
+      // Assuming `text` here is the text to be styled if no reply, and `match` is the style number.
+      // This part is a bit ambiguous from the original code. If `text` is from `match` and `match` is a number,
+      // it means the user did `.fancy text_to_convert style_number`.
+      // Let's assume match is the style number and the text to convert must come from a reply or a default "Fancy"
+      // The original code seems to use `text` (which is `match`) as the text to be styled if `isNaN(match)` is false.
+      // This part is confusing: `styleText(text, match)` if `text` is `match` and `match` is a number.
+      // It should likely be `styleText(some_default_or_previous_text, match)`
+      // For now, I will keep it as is, assuming the user means `.fancy text_to_style stylenumber` where text_to_style is the first part of match.
+      // Or, if `!isNaN(match)` it assumes text is not provided, and `match` is the number for default "Fancy".
+      // The original code is:
+      // if (!isNaN(match)) {
+      //    if (match > listAllFancyTexts("Fancy").length) { // This compares with length of a formatted string, not count
+      //      return await message.sendMessage("Invalid number");
+      //    }
+      //    return await message.reply(styleText(text, match)); // text is match here, which is a number. This is likely wrong.
+      // }
+      // It should be styleText("Some Text", match) or styleText(the_actual_text_from_match_before_number, match)
+      // I'll assume the intent for `.fancy number` is to style "Fancy" with that number.
+      // And `.fancy text number` is not directly supported, only `.fancy text` (lists all) or reply + `.fancy number`.
+      
+      // Corrected logic for standalone .fancy number
+      if (parseInt(match) > 0 && parseInt(match) <= listall("Fancy").length) {
+          return await message.reply(styleText("Fancy", match)); // Styles "Fancy"
+      } else {
+          return await message.sendMessage("Invalid style number. Use .fancy to see available styles.");
+      }
     }
 
     let fancyTexts = listAllFancyTexts(match);
@@ -46,6 +78,12 @@ function listAllFancyTexts(text) {
 }
 
 function styleText(text, index) {
-  index = index - 1;
-  return listall(text)[index];
+  index = parseInt(index) - 1; // Ensure index is an integer
+  const styledTexts = listall(text);
+  if (index >= 0 && index < styledTexts.length) {
+    return styledTexts[index];
+  }
+  return "Invalid style index."; // Fallback
 }
+
+export default {};

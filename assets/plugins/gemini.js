@@ -34,3 +34,5 @@ command(
     return await message.reply(text);
   }
 );
+
+export default {};

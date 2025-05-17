@@ -1,90 +1,81 @@
-import { command, isPrivate } from "../../lib/index.js";
+import { getFilter, setFilter, deleteFilter } from "../database/filters.js";
+import { command } from "../../lib/index.js";
 
 command(
   {
-    pattern: "button",
+    pattern: "filter",
     fromMe: true,
-    desc: "send a button message",
-    usage: "#button",
-    type: "message",
+    desc: "Adds a filter. When someone triggers the filter, it sends the corresponding response. To view your filter list, use `.filter`.",
+    usage: ".filter keyword:message",
+    type: "group",
   },
-  async (message, match, m) => {
-    let data = {
-      jid: message.jid,
-      button: [
-        {
-          type: "list",
-          params: {
-            title: "Button 1",
-            sections: [
-              {
-                title: "Button 1",
-                rows: [
-                  {
-                    header: "title",
-                    title: "Button 1",
-                    description: "Description 1",
-                    id: "#menu",
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        {
-          type: "reply",
-          params: {
-            display_text: "MENU",
-            id: "#menu",
-          },
-        },
-        {
-          type: "url",
-          params: {
-            display_text: "Neeraj-x0",
-            url: "https://www.neerajx0.xyz/",
-            merchant_url: "https://www.neerajx0.xyz/",
-          },
-        },
-        {
-          type: "address",
-          params: {
-            display_text: "Address",
-            id: "message",
-          },
-        },
-        {
-          type: "location",
-          params: {},
-        },
-        {
-          type: "copy",
-          params: {
-            display_text: "copy",
-            id: "123456789",
-            copy_code: "message",
-          },
-        },
-        {
-          type: "call",
-          params: {
-            display_text: "Call",
-            phone_number: "123456789",
-          },
-        },
-      ],
-      header: {
-        title: "X-Asena",
-        subtitle: "WhatsApp Bot",
-        hasMediaAttachment: false,
-      },
-      footer: {
-        text: "Interactive Native Flow Message",
-      },
-      body: {
-        text: "Interactive Message",
-      },
-    };
-    return await message.sendMessage(message.jid, data, {}, "interactive");
+  async (message, match) => {
+    let text, msg;
+    try {
+      [text, msg] = match.split(":");
+    } catch {}
+    if (!match) {
+      const filtreler = await getFilter(message.jid);
+      if (filtreler === false) {
+        await message.reply("No filters are currently set in this chat.");
+      } else {
+        var mesaj = "Your active filters for this chat:" + "\n\n";
+        filtreler.map(
+          (filter) => (mesaj += `✒ ${filter.dataValues.pattern}\n`)
+        );
+        mesaj += "use : .filter keyword:message\nto set a filter";
+        await message.reply(mesaj);
+      }
+    } else if (!text || !msg) {
+      return await message.reply(
+        "```use : .filter keyword:message\nto set a filter```"
+      );
+    } else {
+      await setFilter(message.jid, text, msg, true);
+      return await message.reply(`_Sucessfully set filter for ${text}_`);
+    }
   }
 );
+
+command(
+  {
+    pattern: "stop",
+    fromMe: true,
+    desc: "Stops a previously added filter.",
+    usage: '.stop "hello"',
+    type: "group",
+  },
+  async (message, match) => {
+    if (!match) return await message.reply("\n*Example:* ```.stop hello```");
+
+    const del = await deleteFilter(message.jid, match);
+    await message.reply(`_Filter ${match} deleted_`);
+
+    if (!del) {
+      await message.reply("No existing filter matches the provided input.");
+    }
+  }
+);
+
+command(
+  { on: "text", fromMe: false, dontAddCommandList: true },
+  async (message, match) => {
+    var filtreler = await getFilter(message.jid);
+    if (!filtreler) return;
+    filtreler.map(async (filter) => {
+      const pattern = new RegExp(
+        filter.dataValues.regex
+          ? filter.dataValues.pattern
+          : "\\b(" + filter.dataValues.pattern + ")\\b",
+        "gm"
+      );
+      if (pattern.test(match)) {
+      return  await message.reply(filter.dataValues.text, {
+          quoted: message,
+        });
+      }
+    });
+  }
+);
+
+export default {};

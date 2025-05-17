@@ -1,11 +1,11 @@
 import config from "../../config.js";
-import { PROCESSNAME } from "../../config.js";
+const { PROCESSNAME } = config; // Assuming PROCESSNAME is a property of the default config export
 import { command } from "../../lib/index.js";
 import { exec } from "child_process";
 import simplegit from "simple-git";
 
 const git = simplegit();
-const branch = config.BRANCH;
+var branch = config.BRANCH;
 
 command(
   {
@@ -15,10 +15,10 @@ command(
     type: "user",
   },
   async (message, match) => {
-    const prefix = message.prefix;
+    let prefix = message.prefix; // `prefix` was not declared, assuming it's from message object
     await git.fetch();
 
-    const commits = await git.log([branch + "..origin/" + branch]);
+    var commits = await git.log([branch + "..origin/" + branch]);
     if (match === "now") {
       if (commits.total === 0) {
         return await message.sendMessage(
@@ -98,3 +98,5 @@ async function updatedDependencies() {
     return false;
   }
 }
+
+export default {};

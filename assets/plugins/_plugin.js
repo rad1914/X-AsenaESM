@@ -1,8 +1,14 @@
 import { command } from "../../lib/index.js";
 import axios from "axios";
 import fs from "fs";
-import { Plugins } from "../database/index.js";
-const { PluginDB, installPlugin } = Plugins;
+import { Plugins } from "../database/index.js"; // Assuming Plugins is a named export containing PluginDB and installPlugin
+const { PluginDB, installPlugin } = Plugins; // Destructure after import
+
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 command(
   {
@@ -15,8 +21,9 @@ command(
     if (!match)
       return await message.sendMessage(message.jid, "_Send a plugin url_");
 
+    let url;
     try {
-      var url = new URL(match);
+      url = new URL(match);
     } catch (e) {
       console.log(e);
       return await message.sendMessage(message.jid, "_Invalid Url_");
@@ -34,23 +41,29 @@ command(
       const { data, status } = await axios.get(url);
       if (status === 200) {
         var comand = data.match(/(?<=pattern:) ["'](.*?)["']/);
-        plugin_name = comand[0].replace(/["']/g, "").trim().split(" ")[0];
+        if (comand && comand[0]) {
+          plugin_name = comand[0].replace(/["']/g, "").trim().split(" ")[0];
+        }
         if (!plugin_name) {
           plugin_name = "__" + Math.random().toString(36).substring(8);
         }
-        fs.writeFileSync(new URL(`./${plugin_name}.js`, import.meta.url), data);
+        
+        const pluginPath = join(__dirname, plugin_name + ".js");
+        fs.writeFileSync(pluginPath, data);
+        
         try {
-          // Dynamic import instead of require:
-          await import(`./${plugin_name}.js`);
+          // Dynamic import needs a cache-busting mechanism if re-importing updated versions is desired without restart
+          // Using file:// protocol for dynamic import of local files.
+          await import(`file://${pluginPath}?v=${Date.now()}`);
         } catch (e) {
-          fs.unlinkSync(new URL(`./${plugin_name}.js`, import.meta.url));
+          fs.unlinkSync(pluginPath);
           return await message.sendMessage(
             message.jid,
             "Invalid Plugin\n ```" + e + "```"
           );
         }
 
-        await installPlugin(url, plugin_name);
+        await installPlugin(url.toString(), plugin_name); // Save original URL
 
         await message.sendMessage(
           message.jid,
@@ -59,7 +72,11 @@ command(
       }
     } catch (error) {
       console.error(error);
-      return await message.sendMessage(message.jid, "Failed to fetch plugin");
+      // Attempt to clean up if plugin file was written but failed later
+      if (plugin_name && fs.existsSync(join(__dirname, plugin_name + ".js"))) {
+         // fs.unlinkSync(join(__dirname, plugin_name + ".js")); // Decide if cleanup is needed here
+      }
+      return await message.sendMessage(message.jid, "Failed to fetch or install plugin. " + (error.message || ""));
     }
   }
 );
@@ -105,14 +122,18 @@ command(
       return await message.sendMessage(message.jid, "_Plugin not found_");
     } else {
       await plugin[0].destroy();
-
-      // Clear module from ES module loader cache workaround is tricky; 
-      // Node.js ESM does not expose direct cache clearing.
-      // A common approach is to spawn a child process or restart the app.
-      // Here, just unlink the file:
-      fs.unlinkSync(new URL(`./${match}.js`, import.meta.url));
-
-      await message.sendMessage(message.jid, `Plugin ${match} deleted`);
+      const pluginPath = join(__dirname, match + ".js");
+      
+      // delete require.cache[require.resolve("./" + match + ".js")]; // This is CJS specific and won't work in ESM.
+      // Removing the module from cache in ESM is complex. The plugin's commands would need to be deregistered manually by your command system.
+      // The file is deleted, but the code might persist in memory for the current session.
+      
+      if (fs.existsSync(pluginPath)) {
+        fs.unlinkSync(pluginPath);
+      }
+      await message.sendMessage(message.jid, `Plugin ${match} file deleted. Restart the bot for changes to fully take effect if commands are still active.`);
     }
   }
 );
+
+export default {};
